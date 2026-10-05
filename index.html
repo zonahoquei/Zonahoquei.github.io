@@ -75,45 +75,7 @@
       font-variant-numeric:tabular-nums;
     }
     @keyframes zhShellSpin{to{transform:rotate(360deg)}}
-
-
-    #zh-shell-preview{
-      position:fixed;inset:0;z-index:15;
-      background:#061f38;color:#fff;
-      display:flex;flex-direction:column;
-      opacity:1;visibility:visible;
-      transition:opacity .15s ease,visibility .15s ease;
-      pointer-events:none;
-    }
-    #zh-shell-preview.fora{
-      opacity:0;visibility:hidden;
-    }
-    .zh-preview-head{
-      min-height:98px;
-      display:flex;align-items:center;justify-content:center;
-      padding:12px 54px 8px;
-      background:linear-gradient(180deg,#082b4b,#061f38);
-      border-bottom:1px solid rgba(255,255,255,.08);
-    }
-    .zh-preview-logo{
-      width:92px;height:92px;
-      object-fit:contain;
-    }
-    .zh-preview-body{
-      flex:1;
-      background:#f4f7fb;
-      padding:18px 14px;
-    }
-    .zh-preview-card{
-      max-width:720px;
-      margin:0 auto;
-      height:72px;
-      border-radius:18px;
-      background:#fff;
-      box-shadow:0 2px 8px rgba(0,0,0,.08);
-    }
-
-    #emp-pro{
+#emp-pro{
       position:fixed;inset:0;z-index:10;
       width:100%;height:100%;
       border:0;margin:0;padding:0;
@@ -132,16 +94,7 @@
       <div id="zh-shell-time" class="zh-shell-time">0 s</div>
     </div>
   </div>
-
-
-  <div id="zh-shell-preview" aria-hidden="true">
-    <div class="zh-preview-head">
-      <img class="zh-preview-logo" src="./icon-192.png" alt="">
-    </div>
-    <div class="zh-preview-body">
-      <div class="zh-preview-card"></div>
-    </div>
-  </div>
+</div>
 
   <iframe id="emp-pro"
           src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
@@ -161,7 +114,6 @@
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
     var loader=document.getElementById('zh-shell-loader');
-    var preview=document.getElementById('zh-shell-preview');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
     var timer=null;
@@ -326,7 +278,7 @@
     }
 
     /*
-     * V5.11 — ID persistent protegit + obertura ràpida.
+     * V5.12 — ID persistent protegit + obertura estable.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -743,13 +695,6 @@
 
     frame.addEventListener('load',function(){
       zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
-
-      if(preview){
-        preview.classList.add('fora');
-        setTimeout(function(){
-          if(preview&&preview.parentNode)preview.parentNode.removeChild(preview);
-        },180);
-      }
       zhDiagGuardar();
 
       // V5.4: restaurem primer el cache persistent de pantalles.
@@ -779,7 +724,7 @@
     enviarId();
 
     // Seguretat: si mai no arriba ZH_APP_READY, no bloquegem la PWA.
-    setTimeout(amagarLoader,780);
+    setTimeout(amagarLoader,4000);
 
     window.ZH_DIAG_MOSTRAR=function(){
       var r={
