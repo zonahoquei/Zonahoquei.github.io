@@ -193,6 +193,178 @@
       }
     }
 
+    /*
+     * V5.4 â cache persistent de pantalles al domini GitHub.
+     */
+    var RPC_PREFIX='ZH_RPC_V1|';
+    var RPC_MAX_ENTRADES=18;
+    var RPC_MAX_TOTAL=3800000;
+    var rpcEnviat=false;
+
+    var RPC_PERSISTIBLES={
+      obtenirPartitsApp:1,
+      obtenirResultatsApp:1,
+      obtenirAlMinutApp:1,
+      obtenirClassificacionsApp:1,
+      EMP_JUGADORS_BD26_obtenir:1,
+      EMP_JUGADORS_BD26_obtenirLleuger:1,
+      EMP_JUGADORS_BD26_detall:1,
+      EMP_APP_BD26_obtenirActa:1,
+      EMP_USR_obtenirCataleg:1,
+      EMP_USR_obtenirCatalegJugadors:1,
+      EMP_USR_obtenirCatalegJugadorsLleuger:1
+    };
+
+    function rpcTTL(nom){
+      if(
+        nom==='obtenirPartitsApp' ||
+        nom==='obtenirResultatsApp' ||
+        nom==='obtenirAlMinutApp' ||
+        nom==='EMP_APP_BD26_obtenirActa'
+      )return 2*60*1000;
+
+      if(nom==='obtenirClassificacionsApp')return 10*60*1000;
+      if(nom==='EMP_JUGADORS_BD26_detall')return 20*60*1000;
+
+      if(
+        nom==='EMP_JUGADORS_BD26_obtenir' ||
+        nom==='EMP_JUGADORS_BD26_obtenirLleuger'
+      )return 30*60*1000;
+
+      if(
+        nom==='EMP_USR_obtenirCataleg' ||
+        nom==='EMP_USR_obtenirCatalegJugadors' ||
+        nom==='EMP_USR_obtenirCatalegJugadorsLleuger'
+      )return 6*60*60*1000;
+
+      return 20*60*1000;
+    }
+
+    function rpcHash(s){
+      var h=2166136261;
+      for(var i=0;i<s.length;i++){
+        h^=s.charCodeAt(i);
+        h+=(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24);
+      }
+      return (h>>>0).toString(36);
+    }
+
+    function rpcClau(nom,args){
+      var base=String(nom||'')+'|'+JSON.stringify(args||[]);
+      return RPC_PREFIX+String(nom||'')+'|'+rpcHash(base);
+    }
+
+    function rpcNetejarCaducats(){
+      var ara=Date.now(),items=[];
+
+      try{
+        for(var i=localStorage.length-1;i>=0;i--){
+          var k=localStorage.key(i);
+          if(!k || k.indexOf(RPC_PREFIX)!==0)continue;
+
+          var raw=localStorage.getItem(k)||'';
+          var x=null;
+          try{x=JSON.parse(raw);}catch(e){}
+
+          if(
+            !x ||
+            !RPC_PERSISTIBLES[x.nom] ||
+            !x.temps ||
+            ara-Number(x.temps)>rpcTTL(x.nom)
+          ){
+            localStorage.removeItem(k);
+            continue;
+          }
+
+          items.push({k:k,temps:Number(x.temps||0),mida:raw.length});
+        }
+      }catch(e){}
+
+      items.sort(function(a,b){return b.temps-a.temps;});
+
+      var total=0;
+      items.forEach(function(x,idx){
+        total+=x.mida;
+        if(idx>=RPC_MAX_ENTRADES || total>RPC_MAX_TOTAL){
+          try{localStorage.removeItem(x.k);}catch(e){}
+        }
+      });
+    }
+
+    function rpcGuardar(d){
+      if(!d || !RPC_PERSISTIBLES[d.nom])return;
+
+      var x={
+        nom:String(d.nom||''),
+        args:Array.isArray(d.args)?d.args:[],
+        temps:Number(d.temps||Date.now()),
+        dades:d.dades
+      };
+
+      try{
+        var raw=JSON.stringify(x);
+        if(raw.length>900000)return;
+
+        localStorage.setItem(rpcClau(x.nom,x.args),raw);
+        rpcNetejarCaducats();
+      }catch(e){
+        rpcNetejarCaducats();
+      }
+    }
+
+    function rpcEsborrarTot(){
+      try{
+        for(var i=localStorage.length-1;i>=0;i--){
+          var k=localStorage.key(i);
+          if(k && k.indexOf(RPC_PREFIX)===0){
+            localStorage.removeItem(k);
+          }
+        }
+      }catch(e){}
+      rpcEnviat=false;
+    }
+
+    function rpcLlegir(){
+      rpcNetejarCaducats();
+
+      var out=[];
+      try{
+        for(var i=0;i<localStorage.length;i++){
+          var k=localStorage.key(i);
+          if(!k || k.indexOf(RPC_PREFIX)!==0)continue;
+
+          var x=null;
+          try{x=JSON.parse(localStorage.getItem(k)||'null');}catch(e){}
+
+          if(x && RPC_PERSISTIBLES[x.nom]){
+            out.push(x);
+          }
+        }
+      }catch(e){}
+
+      out.sort(function(a,b){
+        return Number(b.temps||0)-Number(a.temps||0);
+      });
+
+      return out.slice(0,RPC_MAX_ENTRADES);
+    }
+
+    function rpcEnviarAlFrame(){
+      if(rpcEnviat || !frame || !frame.contentWindow)return;
+
+      var entrades=rpcLlegir();
+      rpcEnviat=true;
+
+      if(!entrades.length)return;
+
+      try{
+        frame.contentWindow.postMessage({
+          tipus:'ZH_RPC_CACHE_BULK',
+          entrades:entrades
+        },'*');
+      }catch(e){}
+    }
+
     function favoritsCache(id){
       if(!id)return null;
       return llegirJSON('ZH_FAVS|'+id);
@@ -307,6 +479,16 @@
         return;
       }
 
+      if(d.tipus==='ZH_RPC_CACHE_SET'){
+        rpcGuardar(d);
+        return;
+      }
+
+      if(d.tipus==='ZH_RPC_CACHE_CLEAR'){
+        rpcEsborrarTot();
+        return;
+      }
+
       if(d.tipus==='ZH_HOME_CACHE_SET'){
         var uidHome=String(d.idUsuari||'').trim();
         var dataHome=String(d.data||'').trim();
@@ -324,12 +506,17 @@
       zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
       zhDiagGuardar();
 
+      // V5.4: restaurem primer el cache persistent de pantalles.
+      rpcEnviat=false;
+      rpcEnviarAlFrame();
+
       // L'HTML d'Apps Script ja Ã©s visible. No esperem dades de Sheets:
       // l'app mostrarÃ  el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
       enviarId();
       setTimeout(enviarId,180);
       setTimeout(enviarId,700);
+      setTimeout(rpcEnviarAlFrame,250);
 
       setTimeout(function(){
         try{
