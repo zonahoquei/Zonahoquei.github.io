@@ -194,7 +194,7 @@
     }
 
     /*
-     * V5.4 â cache persistent de pantalles al domini GitHub.
+     * V5.5 â cache persistent + snapshot visual al domini GitHub.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -365,6 +365,80 @@
       }catch(e){}
     }
 
+    /*
+     * V5.5 â snapshot visual de Classificacions i Jugadors.
+     * Es guarda al domini GitHub per sobreviure al tancament complet
+     * de la PWA.
+     */
+    var VIEW_PREFIX='ZH_VIEW_V1|';
+    var VIEW_TTL_MS=30*60*1000;
+    var VIEW_MAX_RAW=1200000;
+
+    function viewClau(id,vista){
+      return VIEW_PREFIX+String(id||'')+'|'+String(vista||'');
+    }
+
+    function viewGuardar(d){
+      var id=String((d&&d.idUsuari)||'').trim();
+      var vista=String((d&&d.vista)||'').trim();
+
+      if(!idValid(id))return;
+      if(vista!=='classificacions' && vista!=='jugadors')return;
+
+      var x={
+        idUsuari:id,
+        vista:vista,
+        temps:Number(d.temps||Date.now()),
+        dades:d.dades||{}
+      };
+
+      try{
+        var raw=JSON.stringify(x);
+        if(raw.length>VIEW_MAX_RAW)return;
+        localStorage.setItem(viewClau(id,vista),raw);
+      }catch(e){}
+    }
+
+    function viewLlegirUna(id,vista){
+      try{
+        var x=JSON.parse(localStorage.getItem(viewClau(id,vista))||'null');
+
+        if(
+          !x ||
+          String(x.idUsuari||'')!==String(id||'') ||
+          Date.now()-Number(x.temps||0)>VIEW_TTL_MS
+        ){
+          try{localStorage.removeItem(viewClau(id,vista));}catch(e){}
+          return null;
+        }
+
+        return x;
+      }catch(e){
+        return null;
+      }
+    }
+
+    function viewLlegir(id){
+      if(!idValid(id))return null;
+
+      return {
+        classificacions:viewLlegirUna(id,'classificacions'),
+        jugadors:viewLlegirUna(id,'jugadors')
+      };
+    }
+
+    function viewEsborrarTot(){
+      try{
+        for(var i=localStorage.length-1;i>=0;i--){
+          var k=localStorage.key(i);
+          if(k && k.indexOf(VIEW_PREFIX)===0){
+            localStorage.removeItem(k);
+          }
+        }
+      }catch(e){}
+    }
+
+
     function favoritsCache(id){
       if(!id)return null;
       return llegirJSON('ZH_FAVS|'+id);
@@ -414,7 +488,8 @@
           tipus:'EMP_USR_ID',
           idUsuari:id,
           favoritsCache:favoritsCache(id),
-          partitsCache:partitsCache(id)
+          partitsCache:partitsCache(id),
+          vistesCache:viewLlegir(id)
         },'*');
       }catch(e){}
 
@@ -486,6 +561,12 @@
 
       if(d.tipus==='ZH_RPC_CACHE_CLEAR'){
         rpcEsborrarTot();
+        viewEsborrarTot();
+        return;
+      }
+
+      if(d.tipus==='ZH_VIEW_CACHE_SET'){
+        viewGuardar(d);
         return;
       }
 
