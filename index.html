@@ -115,17 +115,6 @@
     var timer=null;
     var loaderFora=false;
 
-    /*
-     * V6 â cache persistent al domini GitHub/PWA.
-     * Ãs el domini instalÂ·lat a l'iPhone i, per tant,
-     * Ã©s on guardem el bootstrap persistent.
-     */
-    var ZH_DB_NOM='ZonaHoqueiPWA_V1';
-    var ZH_DB_STORE='bootstrap';
-    var ZH_BOOT_TTL_MS=10*60*1000;
-    var zhDbPromise=null;
-    var zhBootstrapEnviat='';
-
     function idValid(id){
       return /^[A-Za-z0-9_-]{1,80}$/.test(String(id||'').trim());
     }
@@ -178,161 +167,6 @@
       }
     }
 
-    function zhDbObrir(){
-      if(typeof indexedDB==='undefined'){
-        return Promise.resolve(null);
-      }
-
-      if(zhDbPromise)return zhDbPromise;
-
-      zhDbPromise=new Promise(function(resolve){
-        try{
-          var req=indexedDB.open(ZH_DB_NOM,1);
-
-          req.onupgradeneeded=function(){
-            var db=req.result;
-            if(!db.objectStoreNames.contains(ZH_DB_STORE)){
-              db.createObjectStore(
-                ZH_DB_STORE,
-                {keyPath:'clau'}
-              );
-            }
-          };
-
-          req.onsuccess=function(){
-            resolve(req.result);
-          };
-
-          req.onerror=function(){
-            resolve(null);
-          };
-
-        }catch(e){
-          resolve(null);
-        }
-      });
-
-      return zhDbPromise;
-    }
-
-    function zhBootstrapClau(id,data){
-      return String(id||'')+'|'+String(data||'');
-    }
-
-    function zhGuardarBootstrap(id,data,dades,temps){
-      id=String(id||'').trim();
-      data=String(data||'').trim();
-
-      if(
-        !idValid(id) ||
-        !/^\d{4}-\d{2}-\d{2}$/.test(data) ||
-        !dades
-      ){
-        return;
-      }
-
-      zhDbObrir().then(function(db){
-        if(!db)return;
-
-        try{
-          var tx=db.transaction(
-            ZH_DB_STORE,
-            'readwrite'
-          );
-
-          tx.objectStore(
-            ZH_DB_STORE
-          ).put({
-            clau:zhBootstrapClau(id,data),
-            idUsuari:id,
-            data:data,
-            temps:Number(temps||Date.now()),
-            dades:dades
-          });
-        }catch(e){}
-      });
-    }
-
-    function zhLlegirBootstrap(id){
-      id=String(id||'').trim();
-
-      if(!idValid(id)){
-        return Promise.resolve(null);
-      }
-
-      var data=dillunsActual();
-
-      return zhDbObrir().then(function(db){
-        if(!db)return null;
-
-        return new Promise(function(resolve){
-          try{
-            var tx=db.transaction(
-              ZH_DB_STORE,
-              'readonly'
-            );
-
-            var req=tx
-              .objectStore(ZH_DB_STORE)
-              .get(zhBootstrapClau(id,data));
-
-            req.onsuccess=function(){
-              var x=req.result||null;
-
-              if(
-                !x ||
-                !x.dades ||
-                Date.now()-Number(x.temps||0)>
-                  ZH_BOOT_TTL_MS
-              ){
-                resolve(null);
-                return;
-              }
-
-              resolve(x);
-            };
-
-            req.onerror=function(){
-              resolve(null);
-            };
-
-          }catch(e){
-            resolve(null);
-          }
-        });
-      });
-    }
-
-    function zhEnviarBootstrap(id){
-      if(
-        !id ||
-        !frame ||
-        !frame.contentWindow
-      ){
-        return;
-      }
-
-      zhLlegirBootstrap(id).then(function(x){
-        if(!x || !x.dades)return;
-
-        var marca=
-          x.clau+'|'+String(x.temps||'');
-
-        if(zhBootstrapEnviat===marca)return;
-        zhBootstrapEnviat=marca;
-
-        try{
-          frame.contentWindow.postMessage({
-            tipus:'ZH_BOOTSTRAP_CACHE',
-            idUsuari:id,
-            data:x.data,
-            temps:x.temps,
-            dades:x.dades
-          },'*');
-        }catch(e){}
-      });
-    }
-
     function favoritsCache(id){
       if(!id)return null;
       return llegirJSON('ZH_FAVS|'+id);
@@ -343,8 +177,8 @@
       var data=dillunsActual();
       var x=llegirJSON('ZH_HOME|'+id+'|'+data);
       if(!x||!x.dades)return null;
-      // Cache rÃ pid del HOME: mÃ xim 10 minuts.
-      if(Date.now()-Number(x.temps||0)>10*60*1000)return null;
+      // Stale-while-revalidate: mÃ xim 24 h.
+      if(Date.now()-Number(x.temps||0)>24*60*60*1000)return null;
       return {data:data,dades:x.dades};
     }
 
@@ -370,7 +204,6 @@
     function enviarId(){
       var id=llegirId();
       if(!id||!frame||!frame.contentWindow)return;
-
       try{
         frame.contentWindow.postMessage({
           tipus:'EMP_USR_ID',
@@ -379,12 +212,6 @@
           partitsCache:partitsCache(id)
         },'*');
       }catch(e){}
-
-      /*
-       * El bootstrap Ã©s mÃ©s gran i viu a IndexedDB.
-       * L'enviem en un segon missatge quan estÃ  disponible.
-       */
-      zhEnviarBootstrap(id);
     }
 
     function amagarLoader(){
@@ -443,26 +270,6 @@
             {temps:Number(d.temps||Date.now()),dades:d.dades}
           );
         }
-        return;
-      }
-
-      if(d.tipus==='ZH_BOOTSTRAP_CACHE_SET'){
-        var uidBoot=String(d.idUsuari||'').trim();
-        var dataBoot=String(d.data||'').trim();
-
-        if(
-          idValid(uidBoot) &&
-          /^\d{4}-\d{2}-\d{2}$/.test(dataBoot) &&
-          d.dades
-        ){
-          zhGuardarBootstrap(
-            uidBoot,
-            dataBoot,
-            d.dades,
-            d.temps
-          );
-        }
-
         return;
       }
     });
