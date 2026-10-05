@@ -110,8 +110,8 @@
 
     var CLAU='EMP_PRO_ID_USUARI';
     var COOKIE='EMP_PRO_ID_USUARI';
-    var DEVICE_KEY='ZH_DEVICE_ID_V1';
-    var ONBOARDING_PREFIX='ZH_ONBOARDING|';
+    var AUTO_PREFIX='USR_AUTO_';
+    var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
@@ -167,7 +167,7 @@
 
       return '';
     }
-    function generarIdDispositiu(){
+    function generarAutoId(){
       var bytes=new Uint8Array(12);
 
       try{
@@ -185,7 +185,7 @@
         hex+=bytes[k].toString(16).padStart(2,'0');
       }
 
-      return 'ZH_DEV_'+hex;
+      return AUTO_PREFIX+hex;
     }
 
     function onboardingClau(id){
@@ -212,47 +212,43 @@
       }catch(e){}
     }
 
-    function copiarCacheUsuari(origen,desti){
+    function copiarCacheId(origen,desti){
       if(!origen||!desti||origen===desti)return;
 
-      var fav=llegirJSON('ZH_FAVS|'+origen);
-      if(fav)guardarJSON('ZH_FAVS|'+desti,fav);
+      try{
+        var fav=llegirJSON('ZH_FAVS|'+origen);
+        if(fav)guardarJSON('ZH_FAVS|'+desti,fav);
 
-      var data=dillunsActual();
-      var home=llegirJSON('ZH_HOME|'+origen+'|'+data);
-      if(home)guardarJSON('ZH_HOME|'+desti+'|'+data,home);
+        var data=dillunsActual();
+        var home=llegirJSON('ZH_HOME|'+origen+'|'+data);
+        if(home)guardarJSON('ZH_HOME|'+desti+'|'+data,home);
+      }catch(e){}
     }
 
     function assegurarId(){
-      var id='';
+      var actual=llegirId();
 
-      try{
-        id=String(localStorage.getItem(DEVICE_KEY)||'').trim();
-      }catch(e){}
-
-      if(/^ZH_DEV_[A-Fa-f0-9]{16,64}$/.test(id)){
-        guardarId(id);
-        return id;
+      /*
+       * Si ja és el nou ID anònim del dispositiu, el reutilitzem.
+       * Qualsevol identificador antic (USR_..., ZH_DEV_...) es migra
+       * UNA vegada al nou sistema anònim.
+       */
+      if(/^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(actual)){
+        return actual;
       }
 
-      var anterior=llegirId();
+      var id=generarAutoId();
 
-      if(/^ZH_DEV_[A-Fa-f0-9]{16,64}$/.test(anterior)){
-        id=anterior;
-      }else{
-        id=generarIdDispositiu();
-        copiarCacheUsuari(anterior,id);
+      if(actual){
+        copiarCacheId(actual,id);
       }
-
-      try{
-        localStorage.setItem(DEVICE_KEY,id);
-      }catch(e){}
 
       guardarId(id);
       onboardingMarcar(id);
 
       return id;
     }
+
 
     function dillunsActual(){
       var a=new Date();
@@ -282,7 +278,7 @@
     }
 
     /*
-     * V5.7 — identitat automàtica ràpida + onboarding persistent.
+     * V5.9 — base estable V5.5 + ID anònim obligatori de dispositiu.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -578,7 +574,7 @@
           favoritsCache:favoritsCache(id),
           partitsCache:partitsCache(id),
           vistesCache:viewLlegir(id),
-          nouDispositiu:onboardingPendent(id)
+          nouAutomatic:onboardingPendent(id)
         },'*');
       }catch(e){}
 
@@ -625,9 +621,9 @@
         return;
       }
 
-      if(d.tipus==='ZH_DEVICE_ONBOARDING_DONE'){
-        var uidDone=String(d.idUsuari||'').trim();
-        if(idValid(uidDone))onboardingAcabar(uidDone);
+      if(d.tipus==='ZH_AUTO_ONBOARDING_DONE'){
+        var uidAuto=String(d.idUsuari||'').trim();
+        if(idValid(uidAuto))onboardingAcabar(uidAuto);
         return;
       }
 
