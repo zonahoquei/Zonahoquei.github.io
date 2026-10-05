@@ -110,6 +110,9 @@
 
     var CLAU='EMP_PRO_ID_USUARI';
     var CLAU_BACKUP='EMP_PRO_ID_USUARI_BACKUP';
+    var IDB_NOM='ZonaHoquei_Device_ID_V1';
+    var IDB_STORE='identitat';
+    var IDB_CLAU='device_id';
     var COOKIE='EMP_PRO_ID_USUARI';
     var AUTO_PREFIX='USR_AUTO_';
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
@@ -233,33 +236,146 @@
       }catch(e){}
     }
 
-    function assegurarId(){
-      var actual=llegirId();
 
-      /*
-       * Si ja és el nou ID anònim del dispositiu, el reutilitzem.
-       * Qualsevol identificador antic (USR_..., ZH_DEV_...) es migra
-       * UNA vegada al nou sistema anònim.
-       */
-      if(/^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(actual)){
-        return actual;
-      }
+    function idbObrir_(){
+      return new Promise(function(resolve,reject){
+        try{
+          if(!window.indexedDB){
+            reject(new Error('IndexedDB no disponible'));
+            return;
+          }
 
-      var id=generarAutoId();
+          var req=indexedDB.open(IDB_NOM,1);
 
-      if(actual){
-        copiarCacheId(actual,id);
-      }
+          req.onupgradeneeded=function(){
+            var db=req.result;
+            if(!db.objectStoreNames.contains(IDB_STORE)){
+              db.createObjectStore(IDB_STORE);
+            }
+          };
+
+          req.onsuccess=function(){
+            resolve(req.result);
+          };
+
+          req.onerror=function(){
+            reject(req.error||new Error('Error IndexedDB'));
+          };
+        }catch(e){
+          reject(e);
+        }
+      });
+    }
+
+    function idbLlegirId_(){
+      return idbObrir_().then(function(db){
+        return new Promise(function(resolve){
+          try{
+            var tx=db.transaction(IDB_STORE,'readonly');
+            var st=tx.objectStore(IDB_STORE);
+            var req=st.get(IDB_CLAU);
+
+            req.onsuccess=function(){
+              var id=String(req.result||'').trim();
+              resolve(idValid(id)?id:'');
+              try{db.close();}catch(e){}
+            };
+
+            req.onerror=function(){
+              resolve('');
+              try{db.close();}catch(e){}
+            };
+          }catch(e){
+            resolve('');
+            try{db.close();}catch(err){}
+          }
+        });
+      }).catch(function(){
+        return '';
+      });
+    }
+
+    function idbGuardarId_(id){
+      id=String(id||'').trim();
+      if(!idValid(id))return Promise.resolve(false);
+
+      return idbObrir_().then(function(db){
+        return new Promise(function(resolve){
+          try{
+            var tx=db.transaction(IDB_STORE,'readwrite');
+            tx.objectStore(IDB_STORE).put(id,IDB_CLAU);
+
+            tx.oncomplete=function(){
+              resolve(true);
+              try{db.close();}catch(e){}
+            };
+
+            tx.onerror=function(){
+              resolve(false);
+              try{db.close();}catch(e){}
+            };
+          }catch(e){
+            resolve(false);
+            try{db.close();}catch(err){}
+          }
+        });
+      }).catch(function(){
+        return false;
+      });
+    }
+
+    function persistirIdTots_(id){
+      id=String(id||'').trim();
+      if(!idValid(id))return id;
 
       guardarId(id);
-      onboardingMarcar(id);
+      idbGuardarId_(id);
 
       return id;
     }
 
+    /*
+     * ÚNIC punt on es pot crear un ID nou.
+     * Primer comprovem localStorage/cookie i IndexedDB.
+     */
+    function assegurarIdPersistent_(){
+      var existent=llegirId();
 
-    function carregarIframeAmbId(){
-      var id=assegurarId();
+      if(/^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(existent)){
+        persistirIdTots_(existent);
+        return Promise.resolve(existent);
+      }
+
+      return idbLlegirId_().then(function(idDB){
+        if(/^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(idDB)){
+          persistirIdTots_(idDB);
+          return idDB;
+        }
+
+        if(idValid(existent)){
+          persistirIdTots_(existent);
+          return existent;
+        }
+
+        var nou=generarAutoId();
+        persistirIdTots_(nou);
+        onboardingMarcar(nou);
+        return nou;
+      });
+    }
+
+    function assegurarId(){
+      /*
+       * V5.20 — aquesta funció JA NO genera IDs.
+       * Només retorna el que ja està persistent.
+       */
+      var actual=llegirId();
+      return idValid(actual) ? actual : '';
+    }
+
+
+    function carregarIframeAmbId(id){
+      id=String(id||'').trim();
       if(!id || !frame)return;
 
       var base=String(frame.getAttribute('data-src')||'').trim();
@@ -268,7 +384,7 @@
       frame.src=
         base+
         '?emp_uid='+encodeURIComponent(id)+
-        '&zhv=519';
+        '&zhv=520';
     }
 
 
@@ -300,7 +416,7 @@
     }
 
     /*
-     * V5.19 — ID únic persistent per dispositiu, protegit contra substitucions.
+     * V5.20 — ID únic persistent amb IndexedDB + localStorage + cookie.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -634,25 +750,9 @@
       var d=e.data||{};
 
       if(d.tipus==='EMP_USR_SET_ID'){
-        var idActual=assegurarId();
-        var idProposat=String(d.idUsuari||'').trim();
-
         /*
-         * V5.19 — GitHub és l'autoritat.
-         * Si ja tenim un USR_AUTO persistent, cap iframe el pot
-         * substituir per un altre ID diferent.
+         * V5.20 — l'iframe no pot modificar MAI l'ID persistent.
          */
-        if(
-          /^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(idActual)
-        ){
-          enviarId();
-          return;
-        }
-
-        if(idValid(idProposat)){
-          guardarId(idProposat);
-        }
-
         enviarId();
         return;
       }
@@ -715,7 +815,9 @@
       }
     });
 
-    carregarIframeAmbId();
+    assegurarIdPersistent_().then(function(idPersistent){
+      carregarIframeAmbId(idPersistent);
+    });
 
     frame.addEventListener('load',function(){
       zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
