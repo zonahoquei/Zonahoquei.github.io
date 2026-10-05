@@ -278,7 +278,7 @@
     }
 
     /*
-     * V5.12 — ID persistent protegit + obertura estable.
+     * V5.13 — ID persistent + home cache PWA + toc mòbil robust.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -534,7 +534,7 @@
       var x=llegirJSON('ZH_HOME|'+id+'|'+data);
       if(!x||!x.dades)return null;
       // Cache HOME: màxim 5 minuts, alineat amb el LIVE.
-      if(Date.now()-Number(x.temps||0)>5*60*1000)return null;
+      if(Date.now()-Number(x.temps||0)>24*60*60*1000)return null;
       return {data:data,dades:x.dades};
     }
 
