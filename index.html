@@ -117,6 +117,30 @@
     var timer=null;
     var loaderFora=false;
 
+    /*
+     * V5.3 â diagnÃ²stic lleuger d'arrencada.
+     * No canvia el flux de cÃ rrega; nomÃ©s mesura.
+     */
+    var zhDiag={
+      iniciMs:Date.now(),
+      iframeLoadMs:null,
+      appReadyMs:null,
+      loaderForaMs:null,
+      primerIdMs:null,
+      enviamentsId:0
+    };
+
+    window.ZH_DIAG_CARREGA=zhDiag;
+
+    function zhDiagGuardar(){
+      try{
+        sessionStorage.setItem(
+          'ZH_DIAG_CARREGA',
+          JSON.stringify(zhDiag)
+        );
+      }catch(e){}
+    }
+
     function idValid(id){
       return /^[A-Za-z0-9_-]{1,80}$/.test(String(id||'').trim());
     }
@@ -206,6 +230,13 @@
     function enviarId(){
       var id=llegirId();
       if(!id||!frame||!frame.contentWindow)return;
+
+      if(zhDiag.primerIdMs==null){
+        zhDiag.primerIdMs=Date.now()-zhDiag.iniciMs;
+      }
+
+      zhDiag.enviamentsId++;
+
       try{
         frame.contentWindow.postMessage({
           tipus:'EMP_USR_ID',
@@ -214,11 +245,19 @@
           partitsCache:partitsCache(id)
         },'*');
       }catch(e){}
+
+      zhDiagGuardar();
     }
 
     function amagarLoader(){
       if(loaderFora)return;
       loaderFora=true;
+
+      if(zhDiag.loaderForaMs==null){
+        zhDiag.loaderForaMs=Date.now()-zhDiag.iniciMs;
+        zhDiagGuardar();
+      }
+
       if(timer)clearInterval(timer);
       if(loader){
         loader.classList.add('fora');
@@ -251,6 +290,11 @@
       }
 
       if(d.tipus==='ZH_DOCUMENT_READY' || d.tipus==='ZH_APP_READY'){
+        if(zhDiag.appReadyMs==null){
+          zhDiag.appReadyMs=Date.now()-zhDiag.iniciMs;
+          zhDiagGuardar();
+        }
+
         amagarLoader();
         return;
       }
@@ -277,12 +321,24 @@
     });
 
     frame.addEventListener('load',function(){
+      zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
+      zhDiagGuardar();
+
       // L'HTML d'Apps Script ja Ã©s visible. No esperem dades de Sheets:
       // l'app mostrarÃ  el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
       enviarId();
       setTimeout(enviarId,180);
       setTimeout(enviarId,700);
+
+      setTimeout(function(){
+        try{
+          console.log(
+            'ZH DIAG CARREGA',
+            JSON.parse(JSON.stringify(zhDiag))
+          );
+        }catch(e){}
+      },1200);
     });
 
     // L'iframe ja ha comenÃ§at a carregar des del mateix HTML.
@@ -291,6 +347,23 @@
 
     // Seguretat: si mai no arriba ZH_APP_READY, no bloquegem la PWA.
     setTimeout(amagarLoader,4000);
+
+    window.ZH_DIAG_MOSTRAR=function(){
+      var r={
+        iniciMs:zhDiag.iniciMs,
+        iframeLoadMs:zhDiag.iframeLoadMs,
+        appReadyMs:zhDiag.appReadyMs,
+        loaderForaMs:zhDiag.loaderForaMs,
+        primerIdMs:zhDiag.primerIdMs,
+        enviamentsId:zhDiag.enviamentsId
+      };
+
+      try{
+        console.log('ZH DIAG CARREGA',r);
+      }catch(e){}
+
+      return r;
+    };
 
   })();
   </script>
