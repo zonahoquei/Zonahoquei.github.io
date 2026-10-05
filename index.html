@@ -110,13 +110,14 @@
 
     var CLAU='EMP_PRO_ID_USUARI';
     var COOKIE='EMP_PRO_ID_USUARI';
+    var DEVICE_KEY='ZH_DEVICE_ID_V1';
+    var ONBOARDING_PREFIX='ZH_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
     var timer=null;
     var loaderFora=false;
-    var idCreatAra=false;
 
     /*
      * V5.3 — diagnòstic lleuger d'arrencada.
@@ -187,17 +188,71 @@
       return 'ZH_DEV_'+hex;
     }
 
-    function assegurarId(){
-      var id=llegirId();
-      if(id)return id;
-
-      id=generarIdDispositiu();
-      if(!guardarId(id))return '';
-
-      idCreatAra=true;
-      return id;
+    function onboardingClau(id){
+      return ONBOARDING_PREFIX+String(id||'');
     }
 
+    function onboardingPendent(id){
+      try{
+        return localStorage.getItem(onboardingClau(id))==='1';
+      }catch(e){
+        return false;
+      }
+    }
+
+    function onboardingMarcar(id){
+      try{
+        localStorage.setItem(onboardingClau(id),'1');
+      }catch(e){}
+    }
+
+    function onboardingAcabar(id){
+      try{
+        localStorage.removeItem(onboardingClau(id));
+      }catch(e){}
+    }
+
+    function copiarCacheUsuari(origen,desti){
+      if(!origen||!desti||origen===desti)return;
+
+      var fav=llegirJSON('ZH_FAVS|'+origen);
+      if(fav)guardarJSON('ZH_FAVS|'+desti,fav);
+
+      var data=dillunsActual();
+      var home=llegirJSON('ZH_HOME|'+origen+'|'+data);
+      if(home)guardarJSON('ZH_HOME|'+desti+'|'+data,home);
+    }
+
+    function assegurarId(){
+      var id='';
+
+      try{
+        id=String(localStorage.getItem(DEVICE_KEY)||'').trim();
+      }catch(e){}
+
+      if(/^ZH_DEV_[A-Fa-f0-9]{16,64}$/.test(id)){
+        guardarId(id);
+        return id;
+      }
+
+      var anterior=llegirId();
+
+      if(/^ZH_DEV_[A-Fa-f0-9]{16,64}$/.test(anterior)){
+        id=anterior;
+      }else{
+        id=generarIdDispositiu();
+        copiarCacheUsuari(anterior,id);
+      }
+
+      try{
+        localStorage.setItem(DEVICE_KEY,id);
+      }catch(e){}
+
+      guardarId(id);
+      onboardingMarcar(id);
+
+      return id;
+    }
 
     function dillunsActual(){
       var a=new Date();
@@ -227,7 +282,7 @@
     }
 
     /*
-     * V5.6 — identitat automàtica de dispositiu + cache persistent.
+     * V5.7 — identitat automàtica ràpida + onboarding persistent.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -523,10 +578,8 @@
           favoritsCache:favoritsCache(id),
           partitsCache:partitsCache(id),
           vistesCache:viewLlegir(id),
-          nouDispositiu:idCreatAra
+          nouDispositiu:onboardingPendent(id)
         },'*');
-
-        idCreatAra=false;
       }catch(e){}
 
       zhDiagGuardar();
@@ -569,6 +622,12 @@
 
       if(d.tipus==='EMP_USR_GET_ID'){
         enviarId();
+        return;
+      }
+
+      if(d.tipus==='ZH_DEVICE_ONBOARDING_DONE'){
+        var uidDone=String(d.idUsuari||'').trim();
+        if(idValid(uidDone))onboardingAcabar(uidDone);
         return;
       }
 
