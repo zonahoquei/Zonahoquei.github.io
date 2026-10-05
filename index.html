@@ -116,10 +116,11 @@
     var inici=Date.now();
     var timer=null;
     var loaderFora=false;
+    var idCreatAra=false;
 
     /*
-     * V5.3 â diagnÃ²stic lleuger d'arrencada.
-     * No canvia el flux de cÃ rrega; nomÃ©s mesura.
+     * V5.3 — diagnòstic lleuger d'arrencada.
+     * No canvia el flux de càrrega; només mesura.
      */
     var zhDiag={
       iniciMs:Date.now(),
@@ -165,6 +166,38 @@
 
       return '';
     }
+    function generarIdDispositiu(){
+      var bytes=new Uint8Array(12);
+
+      try{
+        if(window.crypto && window.crypto.getRandomValues){
+          window.crypto.getRandomValues(bytes);
+        }else{
+          for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
+        }
+      }catch(e){
+        for(var j=0;j<bytes.length;j++)bytes[j]=Math.floor(Math.random()*256);
+      }
+
+      var hex='';
+      for(var k=0;k<bytes.length;k++){
+        hex+=bytes[k].toString(16).padStart(2,'0');
+      }
+
+      return 'ZH_DEV_'+hex;
+    }
+
+    function assegurarId(){
+      var id=llegirId();
+      if(id)return id;
+
+      id=generarIdDispositiu();
+      if(!guardarId(id))return '';
+
+      idCreatAra=true;
+      return id;
+    }
+
 
     function dillunsActual(){
       var a=new Date();
@@ -194,7 +227,7 @@
     }
 
     /*
-     * V5.5 â cache persistent + snapshot visual al domini GitHub.
+     * V5.6 — identitat automàtica de dispositiu + cache persistent.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -366,7 +399,7 @@
     }
 
     /*
-     * V5.5 â snapshot visual de Classificacions i Jugadors.
+     * V5.5 — snapshot visual de Classificacions i Jugadors.
      * Es guarda al domini GitHub per sobreviure al tancament complet
      * de la PWA.
      */
@@ -449,7 +482,7 @@
       var data=dillunsActual();
       var x=llegirJSON('ZH_HOME|'+id+'|'+data);
       if(!x||!x.dades)return null;
-      // Cache HOME: mÃ xim 5 minuts, alineat amb el LIVE.
+      // Cache HOME: màxim 5 minuts, alineat amb el LIVE.
       if(Date.now()-Number(x.temps||0)>5*60*1000)return null;
       return {data:data,dades:x.dades};
     }
@@ -474,7 +507,7 @@
     }
 
     function enviarId(){
-      var id=llegirId();
+      var id=assegurarId();
       if(!id||!frame||!frame.contentWindow)return;
 
       if(zhDiag.primerIdMs==null){
@@ -489,8 +522,11 @@
           idUsuari:id,
           favoritsCache:favoritsCache(id),
           partitsCache:partitsCache(id),
-          vistesCache:viewLlegir(id)
+          vistesCache:viewLlegir(id),
+          nouDispositiu:idCreatAra
         },'*');
+
+        idCreatAra=false;
       }catch(e){}
 
       zhDiagGuardar();
@@ -591,8 +627,8 @@
       rpcEnviat=false;
       rpcEnviarAlFrame();
 
-      // L'HTML d'Apps Script ja Ã©s visible. No esperem dades de Sheets:
-      // l'app mostrarÃ  el seu propi estat "Carregant..." dins del contingut.
+      // L'HTML d'Apps Script ja és visible. No esperem dades de Sheets:
+      // l'app mostrarà el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
       enviarId();
       setTimeout(enviarId,180);
@@ -609,7 +645,7 @@
       },1200);
     });
 
-    // L'iframe ja ha comenÃ§at a carregar des del mateix HTML.
+    // L'iframe ja ha començat a carregar des del mateix HTML.
     // Enviem la identitat tan aviat com sigui possible.
     enviarId();
 
