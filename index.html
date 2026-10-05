@@ -97,7 +97,7 @@
 </div>
 
   <iframe id="emp-pro"
-          src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          data-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -250,6 +250,27 @@
     }
 
 
+    /*
+     * V5.14 — NO carreguem Apps Script fins que l'ID persistent
+     * ja existeix. L'ID viatja també com a paràmetre de l'iframe.
+     */
+    function carregarIframeAmbId(){
+      var id=assegurarId();
+      if(!id || !frame)return;
+
+      var base=String(frame.getAttribute('data-src')||'').trim();
+      if(!base)return;
+
+      var sep=base.indexOf('?')===-1 ? '?' : '&';
+      frame.src=
+        base+
+        sep+
+        'emp_uid='+encodeURIComponent(id)+
+        '&zhv=514';
+    }
+
+
+
     function dillunsActual(){
       var a=new Date();
       var delta=a.getDay()===0?-6:1-a.getDay();
@@ -278,7 +299,7 @@
     }
 
     /*
-     * V5.13 — ID persistent + home cache PWA + toc mòbil robust.
+     * V5.14 — ID persistent injectat a l'iframe abans de carregar.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -692,6 +713,8 @@
         return;
       }
     });
+
+    carregarIframeAmbId();
 
     frame.addEventListener('load',function(){
       zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
