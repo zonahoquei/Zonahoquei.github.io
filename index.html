@@ -326,7 +326,7 @@
     }
 
     /*
-     * V5.10 — obertura visual ràpida + ID anònim.
+     * V5.11 — ID persistent protegit + obertura ràpida.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -659,7 +659,26 @@
       var d=e.data||{};
 
       if(d.tipus==='EMP_USR_SET_ID'){
-        guardarId(d.idUsuari);
+        var idActual=assegurarId();
+        var idFill=String(d.idUsuari||'').trim();
+
+        /*
+         * L'iframe no pot substituir l'ID persistent del dispositiu
+         * per un altre USR_AUTO diferent.
+         */
+        if(
+          /^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(idActual) &&
+          /^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(idFill) &&
+          idFill!==idActual
+        ){
+          enviarId();
+          return;
+        }
+
+        if(idValid(idFill)){
+          guardarId(idFill);
+        }
+
         enviarId();
         return;
       }
