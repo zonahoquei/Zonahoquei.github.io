@@ -75,6 +75,30 @@
       font-variant-numeric:tabular-nums;
     }
     @keyframes zhShellSpin{to{transform:rotate(360deg)}}
+
+    #zh-pwa-favorits{display:none}
+
+    @media(max-width:900px), (pointer:coarse){
+      #zh-pwa-favorits{
+        display:block;
+        position:fixed;
+        z-index:15;
+        left:max(8px, env(safe-area-inset-left));
+        top:calc(env(safe-area-inset-top) + 22px);
+        width:82px;
+        height:82px;
+        margin:0;
+        padding:0;
+        border:0;
+        background:transparent;
+        color:transparent;
+        -webkit-appearance:none;
+        appearance:none;
+        touch-action:manipulation;
+        -webkit-tap-highlight-color:transparent;
+      }
+    }
+
 #emp-pro{
       position:fixed;inset:0;z-index:10;
       width:100%;height:100%;
@@ -96,6 +120,11 @@
   </div>
 </div>
 
+  <button id="zh-pwa-favorits"
+          type="button"
+          aria-label="Editar favorits"
+          title="Editar favorits"></button>
+
   <iframe id="emp-pro"
           data-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
@@ -113,6 +142,7 @@
     var AUTO_PREFIX='USR_AUTO_';
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
+    var botoFavorits=document.getElementById('zh-pwa-favorits');
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
@@ -266,7 +296,7 @@
         base+
         sep+
         'emp_uid='+encodeURIComponent(id)+
-        '&zhv=514';
+        '&zhv=516';
     }
 
 
@@ -299,7 +329,7 @@
     }
 
     /*
-     * V5.15 — ID persistent + estructura PWA reparada.
+     * V5.16 — Favorits controlats pel shell PWA + ID persistent.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -578,6 +608,16 @@
       return ok;
     }
 
+    function obrirFavoritsPWA(){
+      try{
+        if(frame && frame.contentWindow){
+          frame.contentWindow.postMessage({
+            tipus:'ZH_OBRIR_FAVORITS'
+          },'*');
+        }
+      }catch(e){}
+    }
+
     function enviarId(){
       var id=assegurarId();
       if(!id||!frame||!frame.contentWindow)return;
@@ -600,6 +640,23 @@
       }catch(e){}
 
       zhDiagGuardar();
+    }
+
+    if(botoFavorits){
+      function tocarFavorits(e){
+        try{
+          e.preventDefault();
+          e.stopPropagation();
+        }catch(err){}
+
+        enviarId();
+        obrirFavoritsPWA();
+        setTimeout(obrirFavoritsPWA,80);
+      }
+
+      botoFavorits.addEventListener('click',tocarFavorits,false);
+      botoFavorits.addEventListener('touchend',tocarFavorits,{passive:false});
+      botoFavorits.addEventListener('pointerup',tocarFavorits,false);
     }
 
     function amagarLoader(){
@@ -728,6 +785,13 @@
       // l'app mostrarà el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
       enviarId();
+
+      var uidInicial=assegurarId();
+      if(onboardingPendent(uidInicial)){
+        setTimeout(obrirFavoritsPWA,120);
+        setTimeout(obrirFavoritsPWA,420);
+      }
+
       setTimeout(enviarId,180);
       setTimeout(enviarId,700);
       setTimeout(rpcEnviarAlFrame,250);
