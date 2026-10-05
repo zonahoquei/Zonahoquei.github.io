@@ -76,30 +76,7 @@
     }
     @keyframes zhShellSpin{to{transform:rotate(360deg)}}
 
-    #zh-pwa-favorits{display:none}
-
-    @media(max-width:900px), (pointer:coarse){
-      #zh-pwa-favorits{
-        display:block;
-        position:fixed;
-        z-index:15;
-        left:max(8px, env(safe-area-inset-left));
-        top:calc(env(safe-area-inset-top) + 22px);
-        width:82px;
-        height:82px;
-        margin:0;
-        padding:0;
-        border:0;
-        background:transparent;
-        color:transparent;
-        -webkit-appearance:none;
-        appearance:none;
-        touch-action:manipulation;
-        -webkit-tap-highlight-color:transparent;
-      }
-    }
-
-#emp-pro{
+    #emp-pro{
       position:fixed;inset:0;z-index:10;
       width:100%;height:100%;
       border:0;margin:0;padding:0;
@@ -118,15 +95,9 @@
       <div id="zh-shell-time" class="zh-shell-time">0 s</div>
     </div>
   </div>
-</div>
-
-  <button id="zh-pwa-favorits"
-          type="button"
-          aria-label="Editar favorits"
-          title="Editar favorits"></button>
 
   <iframe id="emp-pro"
-          data-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -142,7 +113,6 @@
     var AUTO_PREFIX='USR_AUTO_';
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
-    var botoFavorits=document.getElementById('zh-pwa-favorits');
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
@@ -280,27 +250,6 @@
     }
 
 
-    /*
-     * V5.14 — NO carreguem Apps Script fins que l'ID persistent
-     * ja existeix. L'ID viatja també com a paràmetre de l'iframe.
-     */
-    function carregarIframeAmbId(){
-      var id=assegurarId();
-      if(!id || !frame)return;
-
-      var base=String(frame.getAttribute('data-src')||'').trim();
-      if(!base)return;
-
-      var sep=base.indexOf('?')===-1 ? '?' : '&';
-      frame.src=
-        base+
-        sep+
-        'emp_uid='+encodeURIComponent(id)+
-        '&zhv=516';
-    }
-
-
-
     function dillunsActual(){
       var a=new Date();
       var delta=a.getDay()===0?-6:1-a.getDay();
@@ -329,7 +278,7 @@
     }
 
     /*
-     * V5.16 — Favorits controlats pel shell PWA + ID persistent.
+     * V5.17 — rollback shell estable V5.9 per PWA.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -585,7 +534,7 @@
       var x=llegirJSON('ZH_HOME|'+id+'|'+data);
       if(!x||!x.dades)return null;
       // Cache HOME: màxim 5 minuts, alineat amb el LIVE.
-      if(Date.now()-Number(x.temps||0)>24*60*60*1000)return null;
+      if(Date.now()-Number(x.temps||0)>5*60*1000)return null;
       return {data:data,dades:x.dades};
     }
 
@@ -606,16 +555,6 @@
       }catch(e){}
 
       return ok;
-    }
-
-    function obrirFavoritsPWA(){
-      try{
-        if(frame && frame.contentWindow){
-          frame.contentWindow.postMessage({
-            tipus:'ZH_OBRIR_FAVORITS'
-          },'*');
-        }
-      }catch(e){}
     }
 
     function enviarId(){
@@ -640,23 +579,6 @@
       }catch(e){}
 
       zhDiagGuardar();
-    }
-
-    if(botoFavorits){
-      function tocarFavorits(e){
-        try{
-          e.preventDefault();
-          e.stopPropagation();
-        }catch(err){}
-
-        enviarId();
-        obrirFavoritsPWA();
-        setTimeout(obrirFavoritsPWA,80);
-      }
-
-      botoFavorits.addEventListener('click',tocarFavorits,false);
-      botoFavorits.addEventListener('touchend',tocarFavorits,{passive:false});
-      botoFavorits.addEventListener('pointerup',tocarFavorits,false);
     }
 
     function amagarLoader(){
@@ -689,26 +611,7 @@
       var d=e.data||{};
 
       if(d.tipus==='EMP_USR_SET_ID'){
-        var idActual=assegurarId();
-        var idFill=String(d.idUsuari||'').trim();
-
-        /*
-         * L'iframe no pot substituir l'ID persistent del dispositiu
-         * per un altre USR_AUTO diferent.
-         */
-        if(
-          /^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(idActual) &&
-          /^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(idFill) &&
-          idFill!==idActual
-        ){
-          enviarId();
-          return;
-        }
-
-        if(idValid(idFill)){
-          guardarId(idFill);
-        }
-
+        guardarId(d.idUsuari);
         enviarId();
         return;
       }
@@ -771,8 +674,6 @@
       }
     });
 
-    carregarIframeAmbId();
-
     frame.addEventListener('load',function(){
       zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
       zhDiagGuardar();
@@ -785,13 +686,6 @@
       // l'app mostrarà el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
       enviarId();
-
-      var uidInicial=assegurarId();
-      if(onboardingPendent(uidInicial)){
-        setTimeout(obrirFavoritsPWA,120);
-        setTimeout(obrirFavoritsPWA,420);
-      }
-
       setTimeout(enviarId,180);
       setTimeout(enviarId,700);
       setTimeout(rpcEnviarAlFrame,250);
@@ -832,5 +726,6 @@
 
   })();
   </script>
+
 </body>
 </html>
