@@ -109,6 +109,7 @@
     'use strict';
 
     var CLAU='EMP_PRO_ID_USUARI';
+    var CLAU_BACKUP='EMP_PRO_ID_USUARI_BACKUP';
     var COOKIE='EMP_PRO_ID_USUARI';
     var AUTO_PREFIX='USR_AUTO_';
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
@@ -149,9 +150,16 @@
 
     function llegirId(){
       var id='';
+
       try{
         id=String(localStorage.getItem(CLAU)||'').trim();
         if(idValid(id))return id;
+
+        id=String(localStorage.getItem(CLAU_BACKUP)||'').trim();
+        if(idValid(id)){
+          localStorage.setItem(CLAU,id);
+          return id;
+        }
       }catch(e){}
 
       try{
@@ -260,7 +268,7 @@
       frame.src=
         base+
         '?emp_uid='+encodeURIComponent(id)+
-        '&zhv=518';
+        '&zhv=519';
     }
 
 
@@ -292,7 +300,7 @@
     }
 
     /*
-     * V5.18 — ID persistent injectat per URL abans de carregar Apps Script.
+     * V5.19 — ID únic persistent per dispositiu, protegit contra substitucions.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -559,6 +567,7 @@
       var ok=false;
       try{
         localStorage.setItem(CLAU,id);
+        localStorage.setItem(CLAU_BACKUP,id);
         ok=(localStorage.getItem(CLAU)===id);
       }catch(e){}
 
@@ -625,7 +634,25 @@
       var d=e.data||{};
 
       if(d.tipus==='EMP_USR_SET_ID'){
-        guardarId(d.idUsuari);
+        var idActual=assegurarId();
+        var idProposat=String(d.idUsuari||'').trim();
+
+        /*
+         * V5.19 — GitHub és l'autoritat.
+         * Si ja tenim un USR_AUTO persistent, cap iframe el pot
+         * substituir per un altre ID diferent.
+         */
+        if(
+          /^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(idActual)
+        ){
+          enviarId();
+          return;
+        }
+
+        if(idValid(idProposat)){
+          guardarId(idProposat);
+        }
+
         enviarId();
         return;
       }
