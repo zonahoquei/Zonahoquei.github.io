@@ -90,7 +90,7 @@
   <div id="zh-shell-loader" role="status" aria-live="polite">
     <div class="zh-shell-box">
       <div class="zh-shell-spinner"></div>
-      <div class="zh-shell-title">Carregant ZonaHoqueiâ¦</div>
+      <div class="zh-shell-title">Carregant ZonaHoquei…</div>
       <div class="zh-shell-sub">Preparant els teus partits</div>
       <div id="zh-shell-time" class="zh-shell-time">0 s</div>
     </div>
@@ -177,7 +177,7 @@
       var data=dillunsActual();
       var x=llegirJSON('ZH_HOME|'+id+'|'+data);
       if(!x||!x.dades)return null;
-      // Stale-while-revalidate: mÃ xim 24 h.
+      // Stale-while-revalidate: màxim 24 h.
       if(Date.now()-Number(x.temps||0)>24*60*60*1000)return null;
       return {data:data,dades:x.dades};
     }
@@ -275,15 +275,15 @@
     });
 
     frame.addEventListener('load',function(){
-      // L'HTML d'Apps Script ja Ã©s visible. No esperem dades de Sheets:
-      // l'app mostrarÃ  el seu propi estat "Carregant..." dins del contingut.
+      // L'HTML d'Apps Script ja és visible. No esperem dades de Sheets:
+      // l'app mostrarà el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
       enviarId();
       setTimeout(enviarId,180);
       setTimeout(enviarId,700);
     });
 
-    // L'iframe ja ha comenÃ§at a carregar des del mateix HTML.
+    // L'iframe ja ha començat a carregar des del mateix HTML.
     // Enviem la identitat tan aviat com sigui possible.
     enviarId();
 
