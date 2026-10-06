@@ -20,8 +20,7 @@
   <link rel="preconnect" href="https://script.googleusercontent.com">
   <link rel="dns-prefetch" href="//script.google.com">
   <link rel="dns-prefetch" href="//script.googleusercontent.com">
-
-  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./icon-192.png">
 
   <style>
@@ -112,6 +111,78 @@
     var AUTO_PREFIX='USR_AUTO_';
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
+
+    var ZH_ROUTE_TOKEN_RE=/^[a-f0-9]{24}$/i;
+
+    function tokenRuta_(){
+      var m=String(location.pathname||'').match(
+        /^\/d\/([a-f0-9]{24})\/?$/i
+      );
+      return m ? String(m[1]).toLowerCase() : '';
+    }
+
+    function generarTokenRuta_(){
+      var bytes=new Uint8Array(12);
+      try{
+        if(window.crypto && window.crypto.getRandomValues){
+          window.crypto.getRandomValues(bytes);
+        }else{
+          for(var i=0;i<bytes.length;i++){
+            bytes[i]=Math.floor(Math.random()*256);
+          }
+        }
+      }catch(e){
+        for(var j=0;j<bytes.length;j++){
+          bytes[j]=Math.floor(Math.random()*256);
+        }
+      }
+
+      var hex='';
+      for(var k=0;k<bytes.length;k++){
+        hex+=bytes[k].toString(16).padStart(2,'0');
+      }
+      return hex;
+    }
+
+    function assegurarRutaDispositiu_(){
+      var token=tokenRuta_();
+
+      if(ZH_ROUTE_TOKEN_RE.test(token)){
+        return token;
+      }
+
+      token=generarTokenRuta_();
+
+      location.replace(
+        location.origin+
+        '/d/'+token+'/'
+      );
+
+      return '';
+    }
+
+    var ZH_DEVICE_TOKEN=assegurarRutaDispositiu_();
+
+    if(!ZH_DEVICE_TOKEN){
+      return;
+    }
+
+    var ZH_DEVICE_ID='USR_AUTO_'+ZH_DEVICE_TOKEN;
+
+    try{
+      var baseIframe=String(
+        frame.getAttribute('data-src')||''
+      ).trim();
+
+      if(baseIframe){
+        frame.src=
+          baseIframe+
+          '?emp_uid='+encodeURIComponent(ZH_DEVICE_ID)+
+          '&zh_route=1';
+      }
+    }catch(e){}
+
+
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
@@ -146,64 +217,26 @@
       return /^[A-Za-z0-9_-]{1,80}$/.test(String(id||'').trim());
     }
 
-    function tokenValid(token){
-      return /^[A-Fa-f0-9]{24}$/.test(String(token||'').trim());
-    }
-
-    function generarTokenURL(){
-      var bytes=new Uint8Array(12);
-
+    function llegirId(){
+      var id='';
       try{
-        if(window.crypto && window.crypto.getRandomValues){
-          window.crypto.getRandomValues(bytes);
-        }else{
-          for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
-        }
-      }catch(e){
-        for(var j=0;j<bytes.length;j++)bytes[j]=Math.floor(Math.random()*256);
-      }
-
-      var hex='';
-      for(var k=0;k<bytes.length;k++){
-        hex+=bytes[k].toString(16).padStart(2,'0');
-      }
-      return hex;
-    }
-
-    function llegirTokenURL(){
-      try{
-        var u=new URL(window.location.href);
-        var token=String(u.searchParams.get('d')||'').trim();
-        return tokenValid(token) ? token.toLowerCase() : '';
-      }catch(e){
-        return '';
-      }
-    }
-
-    function assegurarTokenURL(){
-      var token=llegirTokenURL();
-      if(token)return token;
-
-      token=generarTokenURL();
-
-      try{
-        var u=new URL(window.location.href);
-        u.searchParams.set('d',token);
-        window.history.replaceState(null,'',u.pathname+u.search+u.hash);
+        id=String(localStorage.getItem(CLAU)||'').trim();
+        if(idValid(id))return id;
       }catch(e){}
 
-      return token;
-    }
+      try{
+        var parts=(document.cookie||'').split(';');
+        for(var i=0;i<parts.length;i++){
+          var p=parts[i].trim();
+          if(p.indexOf(COOKIE+'=')===0){
+            id=decodeURIComponent(p.substring(COOKIE.length+1));
+            if(idValid(id))return id;
+          }
+        }
+      }catch(e){}
 
-    function idDesDeToken(token){
-      token=String(token||'').trim().toLowerCase();
-      return tokenValid(token) ? 'USR_AUTO_'+token : '';
+      return '';
     }
-
-    function llegirId(){
-      return idDesDeToken(assegurarTokenURL());
-    }
-
     function generarAutoId(){
       var bytes=new Uint8Array(12);
 
@@ -263,20 +296,8 @@
     }
 
     function assegurarId(){
-      return idDesDeToken(assegurarTokenURL());
+      return ZH_DEVICE_ID;
     }
-
-    var frameIniciatAmbToken=false;
-
-    function carregarIframeAmbToken(){
-      var token=assegurarTokenURL();
-      var base=String(frame.getAttribute('data-src')||'').trim();
-      if(!token || !base)return;
-
-      frameIniciatAmbToken=true;
-      frame.src=base+'?d='+encodeURIComponent(token)+'&zhv=521';
-    }
-
 
     function dillunsActual(){
       var a=new Date();
@@ -306,7 +327,7 @@
     }
 
     /*
-     * V5.21 — base estable V5.9 + identitat única per token ?d= a la URL.
+     * V5.22 — base estable V5.5 + ID anònim obligatori de dispositiu.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -567,13 +588,11 @@
     }
 
     function guardarId(id){
-      /* V5.21: la identitat només ve de ?d= a la URL. */
-      return String(id||'')===assegurarId();
+      return String(id||'')===ZH_DEVICE_ID;
     }
 
-
     function enviarId(){
-      var id=assegurarId();
+      var id=ZH_DEVICE_ID;
       if(!id||!frame||!frame.contentWindow)return;
 
       if(zhDiag.primerIdMs==null){
@@ -626,7 +645,6 @@
       var d=e.data||{};
 
       if(d.tipus==='EMP_USR_SET_ID'){
-        /* V5.21: l'iframe no pot canviar l'ID de la URL. */
         enviarId();
         return;
       }
@@ -690,8 +708,6 @@
     });
 
     frame.addEventListener('load',function(){
-      if(!frameIniciatAmbToken)return;
-
       zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
       zhDiagGuardar();
 
@@ -717,11 +733,9 @@
       },1200);
     });
 
-    /*
-     * V5.21 — primer fixem ?d= a la URL GitHub i després carreguem
-     * Apps Script amb exactament el mateix token.
-     */
-    carregarIframeAmbToken();
+    // L'iframe ja ha començat a carregar des del mateix HTML.
+    // Enviem la identitat tan aviat com sigui possible.
+    enviarId();
 
     // Seguretat: si mai no arriba ZH_APP_READY, no bloquegem la PWA.
     setTimeout(amagarLoader,4000);
@@ -741,15 +755,6 @@
       }catch(e){}
 
       return r;
-    };
-
-
-    window.ZH_ID_URL=function(){
-      return {
-        token:llegirTokenURL(),
-        idUsuari:assegurarId(),
-        url:window.location.href
-      };
     };
 
   })();
