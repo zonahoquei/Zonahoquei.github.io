@@ -20,7 +20,9 @@
   <link rel="preconnect" href="https://script.googleusercontent.com">
   <link rel="dns-prefetch" href="//script.google.com">
   <link rel="dns-prefetch" href="//script.googleusercontent.com">
-<link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
+
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./icon-192.png">
 
   <style>
@@ -95,7 +97,7 @@
   </div>
 
   <iframe id="emp-pro"
-          data-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -111,78 +113,6 @@
     var AUTO_PREFIX='USR_AUTO_';
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
-
-    var ZH_ROUTE_TOKEN_RE=/^[a-f0-9]{24}$/i;
-
-    function tokenRuta_(){
-      var m=String(location.pathname||'').match(
-        /^\/d\/([a-f0-9]{24})\/?$/i
-      );
-      return m ? String(m[1]).toLowerCase() : '';
-    }
-
-    function generarTokenRuta_(){
-      var bytes=new Uint8Array(12);
-      try{
-        if(window.crypto && window.crypto.getRandomValues){
-          window.crypto.getRandomValues(bytes);
-        }else{
-          for(var i=0;i<bytes.length;i++){
-            bytes[i]=Math.floor(Math.random()*256);
-          }
-        }
-      }catch(e){
-        for(var j=0;j<bytes.length;j++){
-          bytes[j]=Math.floor(Math.random()*256);
-        }
-      }
-
-      var hex='';
-      for(var k=0;k<bytes.length;k++){
-        hex+=bytes[k].toString(16).padStart(2,'0');
-      }
-      return hex;
-    }
-
-    function assegurarRutaDispositiu_(){
-      var token=tokenRuta_();
-
-      if(ZH_ROUTE_TOKEN_RE.test(token)){
-        return token;
-      }
-
-      token=generarTokenRuta_();
-
-      location.replace(
-        location.origin+
-        '/d/'+token+'/'
-      );
-
-      return '';
-    }
-
-    var ZH_DEVICE_TOKEN=assegurarRutaDispositiu_();
-
-    if(!ZH_DEVICE_TOKEN){
-      return;
-    }
-
-    var ZH_DEVICE_ID='USR_AUTO_'+ZH_DEVICE_TOKEN;
-
-    try{
-      var baseIframe=String(
-        frame.getAttribute('data-src')||''
-      ).trim();
-
-      if(baseIframe){
-        frame.src=
-          baseIframe+
-          '?emp_uid='+encodeURIComponent(ZH_DEVICE_ID)+
-          '&zh_route=1';
-      }
-    }catch(e){}
-
-
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
@@ -296,7 +226,7 @@
     }
 
     function assegurarId(){
-      return ZH_DEVICE_ID;
+      return '';
     }
 
     function dillunsActual(){
@@ -327,7 +257,7 @@
     }
 
     /*
-     * V5.22 — base estable V5.5 + ID anònim obligatori de dispositiu.
+     * V5.23 — base estable V5.5 + ID anònim obligatori de dispositiu.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -588,31 +518,26 @@
     }
 
     function guardarId(id){
-      return String(id||'')===ZH_DEVICE_ID;
+      id=String(id||'').trim();
+      if(!idValid(id))return false;
+
+      var ok=false;
+      try{
+        localStorage.setItem(CLAU,id);
+        ok=(localStorage.getItem(CLAU)===id);
+      }catch(e){}
+
+      try{
+        document.cookie=
+          COOKIE+'='+encodeURIComponent(id)+
+          '; Max-Age=31536000; Path=/; SameSite=Lax';
+      }catch(e){}
+
+      return ok;
     }
 
     function enviarId(){
-      var id=ZH_DEVICE_ID;
-      if(!id||!frame||!frame.contentWindow)return;
-
-      if(zhDiag.primerIdMs==null){
-        zhDiag.primerIdMs=Date.now()-zhDiag.iniciMs;
-      }
-
-      zhDiag.enviamentsId++;
-
-      try{
-        frame.contentWindow.postMessage({
-          tipus:'EMP_USR_ID',
-          idUsuari:id,
-          favoritsCache:favoritsCache(id),
-          partitsCache:partitsCache(id),
-          vistesCache:viewLlegir(id),
-          nouAutomatic:onboardingPendent(id)
-        },'*');
-      }catch(e){}
-
-      zhDiagGuardar();
+      /* V5.23: la identitat es resol dins Apps Script amb codi fix. */
     }
 
     function amagarLoader(){
@@ -645,7 +570,6 @@
       var d=e.data||{};
 
       if(d.tipus==='EMP_USR_SET_ID'){
-        enviarId();
         return;
       }
 
