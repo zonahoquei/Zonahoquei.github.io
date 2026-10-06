@@ -97,7 +97,7 @@
   </div>
 
   <iframe id="emp-pro"
-          data-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -109,13 +109,7 @@
     'use strict';
 
     var CLAU='EMP_PRO_ID_USUARI';
-    var CLAU_BACKUP='EMP_PRO_ID_USUARI_BACKUP';
-    var IDB_NOM='ZonaHoquei_Device_ID_V1';
-    var IDB_STORE='identitat';
-    var IDB_CLAU='device_id';
     var COOKIE='EMP_PRO_ID_USUARI';
-    var AUTO_PREFIX='USR_AUTO_';
-    var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
@@ -124,8 +118,8 @@
     var loaderFora=false;
 
     /*
-     * V5.3 — diagnòstic lleuger d'arrencada.
-     * No canvia el flux de càrrega; només mesura.
+     * V5.3 â diagnÃ²stic lleuger d'arrencada.
+     * No canvia el flux de cÃ rrega; nomÃ©s mesura.
      */
     var zhDiag={
       iniciMs:Date.now(),
@@ -153,16 +147,9 @@
 
     function llegirId(){
       var id='';
-
       try{
         id=String(localStorage.getItem(CLAU)||'').trim();
         if(idValid(id))return id;
-
-        id=String(localStorage.getItem(CLAU_BACKUP)||'').trim();
-        if(idValid(id)){
-          localStorage.setItem(CLAU,id);
-          return id;
-        }
       }catch(e){}
 
       try{
@@ -178,215 +165,6 @@
 
       return '';
     }
-    function generarAutoId(){
-      var bytes=new Uint8Array(12);
-
-      try{
-        if(window.crypto && window.crypto.getRandomValues){
-          window.crypto.getRandomValues(bytes);
-        }else{
-          for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
-        }
-      }catch(e){
-        for(var j=0;j<bytes.length;j++)bytes[j]=Math.floor(Math.random()*256);
-      }
-
-      var hex='';
-      for(var k=0;k<bytes.length;k++){
-        hex+=bytes[k].toString(16).padStart(2,'0');
-      }
-
-      return AUTO_PREFIX+hex;
-    }
-
-    function onboardingClau(id){
-      return ONBOARDING_PREFIX+String(id||'');
-    }
-
-    function onboardingPendent(id){
-      try{
-        return localStorage.getItem(onboardingClau(id))==='1';
-      }catch(e){
-        return false;
-      }
-    }
-
-    function onboardingMarcar(id){
-      try{
-        localStorage.setItem(onboardingClau(id),'1');
-      }catch(e){}
-    }
-
-    function onboardingAcabar(id){
-      try{
-        localStorage.removeItem(onboardingClau(id));
-      }catch(e){}
-    }
-
-    function copiarCacheId(origen,desti){
-      if(!origen||!desti||origen===desti)return;
-
-      try{
-        var fav=llegirJSON('ZH_FAVS|'+origen);
-        if(fav)guardarJSON('ZH_FAVS|'+desti,fav);
-
-        var data=dillunsActual();
-        var home=llegirJSON('ZH_HOME|'+origen+'|'+data);
-        if(home)guardarJSON('ZH_HOME|'+desti+'|'+data,home);
-      }catch(e){}
-    }
-
-
-    function idbObrir_(){
-      return new Promise(function(resolve,reject){
-        try{
-          if(!window.indexedDB){
-            reject(new Error('IndexedDB no disponible'));
-            return;
-          }
-
-          var req=indexedDB.open(IDB_NOM,1);
-
-          req.onupgradeneeded=function(){
-            var db=req.result;
-            if(!db.objectStoreNames.contains(IDB_STORE)){
-              db.createObjectStore(IDB_STORE);
-            }
-          };
-
-          req.onsuccess=function(){
-            resolve(req.result);
-          };
-
-          req.onerror=function(){
-            reject(req.error||new Error('Error IndexedDB'));
-          };
-        }catch(e){
-          reject(e);
-        }
-      });
-    }
-
-    function idbLlegirId_(){
-      return idbObrir_().then(function(db){
-        return new Promise(function(resolve){
-          try{
-            var tx=db.transaction(IDB_STORE,'readonly');
-            var st=tx.objectStore(IDB_STORE);
-            var req=st.get(IDB_CLAU);
-
-            req.onsuccess=function(){
-              var id=String(req.result||'').trim();
-              resolve(idValid(id)?id:'');
-              try{db.close();}catch(e){}
-            };
-
-            req.onerror=function(){
-              resolve('');
-              try{db.close();}catch(e){}
-            };
-          }catch(e){
-            resolve('');
-            try{db.close();}catch(err){}
-          }
-        });
-      }).catch(function(){
-        return '';
-      });
-    }
-
-    function idbGuardarId_(id){
-      id=String(id||'').trim();
-      if(!idValid(id))return Promise.resolve(false);
-
-      return idbObrir_().then(function(db){
-        return new Promise(function(resolve){
-          try{
-            var tx=db.transaction(IDB_STORE,'readwrite');
-            tx.objectStore(IDB_STORE).put(id,IDB_CLAU);
-
-            tx.oncomplete=function(){
-              resolve(true);
-              try{db.close();}catch(e){}
-            };
-
-            tx.onerror=function(){
-              resolve(false);
-              try{db.close();}catch(e){}
-            };
-          }catch(e){
-            resolve(false);
-            try{db.close();}catch(err){}
-          }
-        });
-      }).catch(function(){
-        return false;
-      });
-    }
-
-    function persistirIdTots_(id){
-      id=String(id||'').trim();
-      if(!idValid(id))return id;
-
-      guardarId(id);
-      idbGuardarId_(id);
-
-      return id;
-    }
-
-    /*
-     * ÚNIC punt on es pot crear un ID nou.
-     * Primer comprovem localStorage/cookie i IndexedDB.
-     */
-    function assegurarIdPersistent_(){
-      var existent=llegirId();
-
-      if(/^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(existent)){
-        persistirIdTots_(existent);
-        return Promise.resolve(existent);
-      }
-
-      return idbLlegirId_().then(function(idDB){
-        if(/^USR_AUTO_[A-Fa-f0-9]{16,64}$/.test(idDB)){
-          persistirIdTots_(idDB);
-          return idDB;
-        }
-
-        if(idValid(existent)){
-          persistirIdTots_(existent);
-          return existent;
-        }
-
-        var nou=generarAutoId();
-        persistirIdTots_(nou);
-        onboardingMarcar(nou);
-        return nou;
-      });
-    }
-
-    function assegurarId(){
-      /*
-       * V5.20 — aquesta funció JA NO genera IDs.
-       * Només retorna el que ja està persistent.
-       */
-      var actual=llegirId();
-      return idValid(actual) ? actual : '';
-    }
-
-
-    function carregarIframeAmbId(id){
-      id=String(id||'').trim();
-      if(!id || !frame)return;
-
-      var base=String(frame.getAttribute('data-src')||'').trim();
-      if(!base)return;
-
-      frame.src=
-        base+
-        '?emp_uid='+encodeURIComponent(id)+
-        '&zhv=520';
-    }
-
 
     function dillunsActual(){
       var a=new Date();
@@ -416,7 +194,7 @@
     }
 
     /*
-     * V5.20 — ID únic persistent amb IndexedDB + localStorage + cookie.
+     * V5.5 â cache persistent + snapshot visual al domini GitHub.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -588,7 +366,7 @@
     }
 
     /*
-     * V5.5 — snapshot visual de Classificacions i Jugadors.
+     * V5.5 â snapshot visual de Classificacions i Jugadors.
      * Es guarda al domini GitHub per sobreviure al tancament complet
      * de la PWA.
      */
@@ -671,7 +449,7 @@
       var data=dillunsActual();
       var x=llegirJSON('ZH_HOME|'+id+'|'+data);
       if(!x||!x.dades)return null;
-      // Cache HOME: màxim 5 minuts, alineat amb el LIVE.
+      // Cache HOME: mÃ xim 5 minuts, alineat amb el LIVE.
       if(Date.now()-Number(x.temps||0)>5*60*1000)return null;
       return {data:data,dades:x.dades};
     }
@@ -683,7 +461,6 @@
       var ok=false;
       try{
         localStorage.setItem(CLAU,id);
-        localStorage.setItem(CLAU_BACKUP,id);
         ok=(localStorage.getItem(CLAU)===id);
       }catch(e){}
 
@@ -697,7 +474,7 @@
     }
 
     function enviarId(){
-      var id=assegurarId();
+      var id=llegirId();
       if(!id||!frame||!frame.contentWindow)return;
 
       if(zhDiag.primerIdMs==null){
@@ -712,8 +489,7 @@
           idUsuari:id,
           favoritsCache:favoritsCache(id),
           partitsCache:partitsCache(id),
-          vistesCache:viewLlegir(id),
-          nouAutomatic:onboardingPendent(id)
+          vistesCache:viewLlegir(id)
         },'*');
       }catch(e){}
 
@@ -750,21 +526,13 @@
       var d=e.data||{};
 
       if(d.tipus==='EMP_USR_SET_ID'){
-        /*
-         * V5.20 — l'iframe no pot modificar MAI l'ID persistent.
-         */
+        guardarId(d.idUsuari);
         enviarId();
         return;
       }
 
       if(d.tipus==='EMP_USR_GET_ID'){
         enviarId();
-        return;
-      }
-
-      if(d.tipus==='ZH_AUTO_ONBOARDING_DONE'){
-        var uidAuto=String(d.idUsuari||'').trim();
-        if(idValid(uidAuto))onboardingAcabar(uidAuto);
         return;
       }
 
@@ -815,10 +583,6 @@
       }
     });
 
-    assegurarIdPersistent_().then(function(idPersistent){
-      carregarIframeAmbId(idPersistent);
-    });
-
     frame.addEventListener('load',function(){
       zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
       zhDiagGuardar();
@@ -827,8 +591,8 @@
       rpcEnviat=false;
       rpcEnviarAlFrame();
 
-      // L'HTML d'Apps Script ja és visible. No esperem dades de Sheets:
-      // l'app mostrarà el seu propi estat "Carregant..." dins del contingut.
+      // L'HTML d'Apps Script ja Ã©s visible. No esperem dades de Sheets:
+      // l'app mostrarÃ  el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
       enviarId();
       setTimeout(enviarId,180);
@@ -844,6 +608,10 @@
         }catch(e){}
       },1200);
     });
+
+    // L'iframe ja ha comenÃ§at a carregar des del mateix HTML.
+    // Enviem la identitat tan aviat com sigui possible.
+    enviarId();
 
     // Seguretat: si mai no arriba ZH_APP_READY, no bloquegem la PWA.
     setTimeout(amagarLoader,4000);
