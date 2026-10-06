@@ -356,13 +356,13 @@
         nom==='EMP_APP_BD26_obtenirActa'
       )return 2*60*1000;
 
-      if(nom==='obtenirClassificacionsApp')return 10*60*1000;
-      if(nom==='EMP_JUGADORS_BD26_detall')return 20*60*1000;
+      if(nom==='obtenirClassificacionsApp')return 2*60*1000;
+      if(nom==='EMP_JUGADORS_BD26_detall')return 2*60*1000;
 
       if(
         nom==='EMP_JUGADORS_BD26_obtenir' ||
         nom==='EMP_JUGADORS_BD26_obtenirLleuger'
-      )return 30*60*1000;
+      )return 2*60*1000;
 
       if(
         nom==='EMP_USR_obtenirCataleg' ||
@@ -370,7 +370,7 @@
         nom==='EMP_USR_obtenirCatalegJugadorsLleuger'
       )return 6*60*60*1000;
 
-      return 20*60*1000;
+      return 2*60*1000;
     }
 
     function rpcHash(s){
