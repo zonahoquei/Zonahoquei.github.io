@@ -114,6 +114,7 @@
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
     var ZH_DEVICE_CODE_KEY='ZH_DEVICE_CODE_V1';
+    var ZH_DEVICE_CODE_REMEMBER_KEY='ZH_DEVICE_CODE_REMEMBER_V1';
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
@@ -258,7 +259,7 @@
     }
 
     /*
-     * V5.24 — base estable V5.5 + ID anònim obligatori de dispositiu.
+     * V5.25 — base estable V5.5 + ID anònim obligatori de dispositiu.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -537,29 +538,57 @@
       return ok;
     }
 
+    function llegirRecordarCodi_(){
+      try{
+        return localStorage.getItem(
+          ZH_DEVICE_CODE_REMEMBER_KEY
+        )==='1';
+      }catch(e){
+        return false;
+      }
+    }
+
     function llegirCodiDispositiu_(){
+      if(!llegirRecordarCodi_()){
+        return '';
+      }
+
       try{
         return String(
-          localStorage.getItem(ZH_DEVICE_CODE_KEY)||''
+          localStorage.getItem(
+            ZH_DEVICE_CODE_KEY
+          )||''
         ).trim();
       }catch(e){
         return '';
       }
     }
 
-    function guardarCodiDispositiu_(codi){
-      codi=String(codi||'').trim();
-      if(!codi)return false;
+    function guardarCodiDispositiu_(codi,recordar){
+      codi=String(codi||'')
+        .replace(/\D+/g,'')
+        .substring(0,12);
+
+      recordar=!!recordar;
 
       try{
         localStorage.setItem(
-          ZH_DEVICE_CODE_KEY,
-          codi
+          ZH_DEVICE_CODE_REMEMBER_KEY,
+          recordar ? '1' : '0'
         );
 
-        return (
-          String(localStorage.getItem(ZH_DEVICE_CODE_KEY)||'')===codi
-        );
+        if(recordar && codi){
+          localStorage.setItem(
+            ZH_DEVICE_CODE_KEY,
+            codi
+          );
+        }else{
+          localStorage.removeItem(
+            ZH_DEVICE_CODE_KEY
+          );
+        }
+
+        return true;
       }catch(e){
         return false;
       }
@@ -603,7 +632,8 @@
           frame.contentWindow.postMessage(
             {
               tipus:'ZH_DEVICE_CODE_VALUE',
-              codi:llegirCodiDispositiu_()
+              codi:llegirCodiDispositiu_(),
+              recordar:llegirRecordarCodi_()
             },
             '*'
           );
@@ -612,13 +642,17 @@
       }
 
       if(d.tipus==='ZH_DEVICE_CODE_SET'){
-        guardarCodiDispositiu_(d.codi);
+        guardarCodiDispositiu_(
+          d.codi,
+          d.recordar
+        );
 
         try{
           frame.contentWindow.postMessage(
             {
               tipus:'ZH_DEVICE_CODE_VALUE',
-              codi:llegirCodiDispositiu_()
+              codi:llegirCodiDispositiu_(),
+              recordar:llegirRecordarCodi_()
             },
             '*'
           );
@@ -704,7 +738,8 @@
         frame.contentWindow.postMessage(
           {
             tipus:'ZH_DEVICE_CODE_VALUE',
-            codi:llegirCodiDispositiu_()
+            codi:llegirCodiDispositiu_(),
+            recordar:llegirRecordarCodi_()
           },
           '*'
         );
