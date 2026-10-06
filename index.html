@@ -115,6 +115,8 @@
     var frame=document.getElementById('emp-pro');
     var ZH_DEVICE_CODE_KEY='ZH_DEVICE_CODE_V1';
     var ZH_DEVICE_CODE_REMEMBER_KEY='ZH_DEVICE_CODE_REMEMBER_V1';
+    var ZH_DEVICE_CODE_CACHE='zh-device-code-v1';
+    var ZH_DEVICE_CODE_URL='/__zh_device_code__';
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
@@ -259,7 +261,7 @@
     }
 
     /*
-     * V5.26 — base estable V5.5 + ID anònim obligatori de dispositiu.
+     * V5.27 — base estable V5.5 + ID anònim obligatori de dispositiu.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -538,6 +540,35 @@
       return ok;
     }
 
+    async function cacheCodiLlegir_(){
+      try{
+        if(!('caches' in window))return '';
+        var c=await caches.open(ZH_DEVICE_CODE_CACHE);
+        var r=await c.match(ZH_DEVICE_CODE_URL);
+        if(!r)return '';
+        var d=await r.json();
+        if(!d||!d.recordar)return '';
+        return String(d.codi||'').replace(/\D+/g,'').substring(0,12);
+      }catch(e){return '';}
+    }
+
+    async function cacheCodiGuardar_(codi,recordar){
+      try{
+        if(!('caches' in window))return;
+        var c=await caches.open(ZH_DEVICE_CODE_CACHE);
+        if(!recordar||!codi){
+          await c.delete(ZH_DEVICE_CODE_URL);
+          return;
+        }
+        await c.put(
+          ZH_DEVICE_CODE_URL,
+          new Response(JSON.stringify({codi:String(codi||''),recordar:true}),{
+            headers:{'Content-Type':'application/json'}
+          })
+        );
+      }catch(e){}
+    }
+
     function llegirRecordarCodi_(){
       try{
         return localStorage.getItem(
@@ -570,6 +601,8 @@
         .substring(0,12);
 
       recordar=!!recordar;
+
+      cacheCodiGuardar_(codi,recordar);
 
       try{
         localStorage.setItem(
@@ -628,16 +661,28 @@
       var d=e.data||{};
 
       if(d.tipus==='ZH_DEVICE_CODE_GET'){
-        try{
-          frame.contentWindow.postMessage(
-            {
+        var codiMem=llegirCodiDispositiu_();
+        if(codiMem && llegirRecordarCodi_()){
+          try{
+            frame.contentWindow.postMessage({
               tipus:'ZH_DEVICE_CODE_VALUE',
-              codi:llegirCodiDispositiu_(),
-              recordar:llegirRecordarCodi_()
-            },
-            '*'
-          );
-        }catch(e){}
+              codi:codiMem,
+              recordar:true
+            },'*');
+          }catch(e){}
+          return;
+        }
+
+        cacheCodiLlegir_().then(function(codiCache){
+          if(codiCache)guardarCodiDispositiu_(codiCache,true);
+          try{
+            frame.contentWindow.postMessage({
+              tipus:'ZH_DEVICE_CODE_VALUE',
+              codi:codiCache||'',
+              recordar:!!codiCache
+            },'*');
+          }catch(e){}
+        });
         return;
       }
 
