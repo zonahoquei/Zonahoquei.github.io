@@ -21,7 +21,6 @@
   <link rel="dns-prefetch" href="//script.google.com">
   <link rel="dns-prefetch" href="//script.googleusercontent.com">
 
-  <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icon-192.png">
   <link rel="apple-touch-icon" href="./icon-192.png">
 
@@ -97,7 +96,7 @@
   </div>
 
   <iframe id="emp-pro"
-          src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          data-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -110,6 +109,8 @@
 
     var CLAU='EMP_PRO_ID_USUARI';
     var COOKIE='EMP_PRO_ID_USUARI';
+    var AUTO_PREFIX='USR_AUTO_';
+    var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
@@ -118,8 +119,8 @@
     var loaderFora=false;
 
     /*
-     * V5.3 â diagnÃ²stic lleuger d'arrencada.
-     * No canvia el flux de cÃ rrega; nomÃ©s mesura.
+     * V5.3 — diagnòstic lleuger d'arrencada.
+     * No canvia el flux de càrrega; només mesura.
      */
     var zhDiag={
       iniciMs:Date.now(),
@@ -145,26 +146,137 @@
       return /^[A-Za-z0-9_-]{1,80}$/.test(String(id||'').trim());
     }
 
-    function llegirId(){
-      var id='';
-      try{
-        id=String(localStorage.getItem(CLAU)||'').trim();
-        if(idValid(id))return id;
-      }catch(e){}
-
-      try{
-        var parts=(document.cookie||'').split(';');
-        for(var i=0;i<parts.length;i++){
-          var p=parts[i].trim();
-          if(p.indexOf(COOKIE+'=')===0){
-            id=decodeURIComponent(p.substring(COOKIE.length+1));
-            if(idValid(id))return id;
-          }
-        }
-      }catch(e){}
-
-      return '';
+    function tokenValid(token){
+      return /^[A-Fa-f0-9]{24}$/.test(String(token||'').trim());
     }
+
+    function generarTokenURL(){
+      var bytes=new Uint8Array(12);
+
+      try{
+        if(window.crypto && window.crypto.getRandomValues){
+          window.crypto.getRandomValues(bytes);
+        }else{
+          for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
+        }
+      }catch(e){
+        for(var j=0;j<bytes.length;j++)bytes[j]=Math.floor(Math.random()*256);
+      }
+
+      var hex='';
+      for(var k=0;k<bytes.length;k++){
+        hex+=bytes[k].toString(16).padStart(2,'0');
+      }
+      return hex;
+    }
+
+    function llegirTokenURL(){
+      try{
+        var u=new URL(window.location.href);
+        var token=String(u.searchParams.get('d')||'').trim();
+        return tokenValid(token) ? token.toLowerCase() : '';
+      }catch(e){
+        return '';
+      }
+    }
+
+    function assegurarTokenURL(){
+      var token=llegirTokenURL();
+      if(token)return token;
+
+      token=generarTokenURL();
+
+      try{
+        var u=new URL(window.location.href);
+        u.searchParams.set('d',token);
+        window.history.replaceState(null,'',u.pathname+u.search+u.hash);
+      }catch(e){}
+
+      return token;
+    }
+
+    function idDesDeToken(token){
+      token=String(token||'').trim().toLowerCase();
+      return tokenValid(token) ? 'USR_AUTO_'+token : '';
+    }
+
+    function llegirId(){
+      return idDesDeToken(assegurarTokenURL());
+    }
+
+    function generarAutoId(){
+      var bytes=new Uint8Array(12);
+
+      try{
+        if(window.crypto && window.crypto.getRandomValues){
+          window.crypto.getRandomValues(bytes);
+        }else{
+          for(var i=0;i<bytes.length;i++)bytes[i]=Math.floor(Math.random()*256);
+        }
+      }catch(e){
+        for(var j=0;j<bytes.length;j++)bytes[j]=Math.floor(Math.random()*256);
+      }
+
+      var hex='';
+      for(var k=0;k<bytes.length;k++){
+        hex+=bytes[k].toString(16).padStart(2,'0');
+      }
+
+      return AUTO_PREFIX+hex;
+    }
+
+    function onboardingClau(id){
+      return ONBOARDING_PREFIX+String(id||'');
+    }
+
+    function onboardingPendent(id){
+      try{
+        return localStorage.getItem(onboardingClau(id))==='1';
+      }catch(e){
+        return false;
+      }
+    }
+
+    function onboardingMarcar(id){
+      try{
+        localStorage.setItem(onboardingClau(id),'1');
+      }catch(e){}
+    }
+
+    function onboardingAcabar(id){
+      try{
+        localStorage.removeItem(onboardingClau(id));
+      }catch(e){}
+    }
+
+    function copiarCacheId(origen,desti){
+      if(!origen||!desti||origen===desti)return;
+
+      try{
+        var fav=llegirJSON('ZH_FAVS|'+origen);
+        if(fav)guardarJSON('ZH_FAVS|'+desti,fav);
+
+        var data=dillunsActual();
+        var home=llegirJSON('ZH_HOME|'+origen+'|'+data);
+        if(home)guardarJSON('ZH_HOME|'+desti+'|'+data,home);
+      }catch(e){}
+    }
+
+    function assegurarId(){
+      return idDesDeToken(assegurarTokenURL());
+    }
+
+    var frameIniciatAmbToken=false;
+
+    function carregarIframeAmbToken(){
+      var token=assegurarTokenURL();
+      var base=String(frame.getAttribute('data-src')||'').trim();
+      if(!token || !base)return;
+
+      frameIniciatAmbToken=true;
+      frame.src=base+'?d='+encodeURIComponent(token)+'&zhv=521';
+    }
+
 
     function dillunsActual(){
       var a=new Date();
@@ -194,7 +306,7 @@
     }
 
     /*
-     * V5.5 â cache persistent + snapshot visual al domini GitHub.
+     * V5.21 — base estable V5.9 + identitat única per token ?d= a la URL.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -366,7 +478,7 @@
     }
 
     /*
-     * V5.5 â snapshot visual de Classificacions i Jugadors.
+     * V5.5 — snapshot visual de Classificacions i Jugadors.
      * Es guarda al domini GitHub per sobreviure al tancament complet
      * de la PWA.
      */
@@ -449,32 +561,19 @@
       var data=dillunsActual();
       var x=llegirJSON('ZH_HOME|'+id+'|'+data);
       if(!x||!x.dades)return null;
-      // Cache HOME: mÃ xim 5 minuts, alineat amb el LIVE.
+      // Cache HOME: màxim 5 minuts, alineat amb el LIVE.
       if(Date.now()-Number(x.temps||0)>5*60*1000)return null;
       return {data:data,dades:x.dades};
     }
 
     function guardarId(id){
-      id=String(id||'').trim();
-      if(!idValid(id))return false;
-
-      var ok=false;
-      try{
-        localStorage.setItem(CLAU,id);
-        ok=(localStorage.getItem(CLAU)===id);
-      }catch(e){}
-
-      try{
-        document.cookie=
-          COOKIE+'='+encodeURIComponent(id)+
-          '; Max-Age=31536000; Path=/; SameSite=Lax';
-      }catch(e){}
-
-      return ok;
+      /* V5.21: la identitat només ve de ?d= a la URL. */
+      return String(id||'')===assegurarId();
     }
 
+
     function enviarId(){
-      var id=llegirId();
+      var id=assegurarId();
       if(!id||!frame||!frame.contentWindow)return;
 
       if(zhDiag.primerIdMs==null){
@@ -489,7 +588,8 @@
           idUsuari:id,
           favoritsCache:favoritsCache(id),
           partitsCache:partitsCache(id),
-          vistesCache:viewLlegir(id)
+          vistesCache:viewLlegir(id),
+          nouAutomatic:onboardingPendent(id)
         },'*');
       }catch(e){}
 
@@ -526,13 +626,19 @@
       var d=e.data||{};
 
       if(d.tipus==='EMP_USR_SET_ID'){
-        guardarId(d.idUsuari);
+        /* V5.21: l'iframe no pot canviar l'ID de la URL. */
         enviarId();
         return;
       }
 
       if(d.tipus==='EMP_USR_GET_ID'){
         enviarId();
+        return;
+      }
+
+      if(d.tipus==='ZH_AUTO_ONBOARDING_DONE'){
+        var uidAuto=String(d.idUsuari||'').trim();
+        if(idValid(uidAuto))onboardingAcabar(uidAuto);
         return;
       }
 
@@ -584,6 +690,8 @@
     });
 
     frame.addEventListener('load',function(){
+      if(!frameIniciatAmbToken)return;
+
       zhDiag.iframeLoadMs=Date.now()-zhDiag.iniciMs;
       zhDiagGuardar();
 
@@ -591,8 +699,8 @@
       rpcEnviat=false;
       rpcEnviarAlFrame();
 
-      // L'HTML d'Apps Script ja Ã©s visible. No esperem dades de Sheets:
-      // l'app mostrarÃ  el seu propi estat "Carregant..." dins del contingut.
+      // L'HTML d'Apps Script ja és visible. No esperem dades de Sheets:
+      // l'app mostrarà el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
       enviarId();
       setTimeout(enviarId,180);
@@ -609,9 +717,11 @@
       },1200);
     });
 
-    // L'iframe ja ha comenÃ§at a carregar des del mateix HTML.
-    // Enviem la identitat tan aviat com sigui possible.
-    enviarId();
+    /*
+     * V5.21 — primer fixem ?d= a la URL GitHub i després carreguem
+     * Apps Script amb exactament el mateix token.
+     */
+    carregarIframeAmbToken();
 
     // Seguretat: si mai no arriba ZH_APP_READY, no bloquegem la PWA.
     setTimeout(amagarLoader,4000);
@@ -631,6 +741,15 @@
       }catch(e){}
 
       return r;
+    };
+
+
+    window.ZH_ID_URL=function(){
+      return {
+        token:llegirTokenURL(),
+        idUsuari:assegurarId(),
+        url:window.location.href
+      };
     };
 
   })();
