@@ -113,6 +113,7 @@
     var AUTO_PREFIX='USR_AUTO_';
     var ONBOARDING_PREFIX='ZH_AUTO_ONBOARDING|';
     var frame=document.getElementById('emp-pro');
+    var ZH_DEVICE_CODE_KEY='ZH_DEVICE_CODE_V1';
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
     var inici=Date.now();
@@ -257,7 +258,7 @@
     }
 
     /*
-     * V5.23 — base estable V5.5 + ID anònim obligatori de dispositiu.
+     * V5.24 — base estable V5.5 + ID anònim obligatori de dispositiu.
      */
     var RPC_PREFIX='ZH_RPC_V1|';
     var RPC_MAX_ENTRADES=18;
@@ -536,6 +537,34 @@
       return ok;
     }
 
+    function llegirCodiDispositiu_(){
+      try{
+        return String(
+          localStorage.getItem(ZH_DEVICE_CODE_KEY)||''
+        ).trim();
+      }catch(e){
+        return '';
+      }
+    }
+
+    function guardarCodiDispositiu_(codi){
+      codi=String(codi||'').trim();
+      if(!codi)return false;
+
+      try{
+        localStorage.setItem(
+          ZH_DEVICE_CODE_KEY,
+          codi
+        );
+
+        return (
+          String(localStorage.getItem(ZH_DEVICE_CODE_KEY)||'')===codi
+        );
+      }catch(e){
+        return false;
+      }
+    }
+
     function enviarId(){
       /* V5.23: la identitat es resol dins Apps Script amb codi fix. */
     }
@@ -568,6 +597,34 @@
       if(!frame||e.source!==frame.contentWindow)return;
 
       var d=e.data||{};
+
+      if(d.tipus==='ZH_DEVICE_CODE_GET'){
+        try{
+          frame.contentWindow.postMessage(
+            {
+              tipus:'ZH_DEVICE_CODE_VALUE',
+              codi:llegirCodiDispositiu_()
+            },
+            '*'
+          );
+        }catch(e){}
+        return;
+      }
+
+      if(d.tipus==='ZH_DEVICE_CODE_SET'){
+        guardarCodiDispositiu_(d.codi);
+
+        try{
+          frame.contentWindow.postMessage(
+            {
+              tipus:'ZH_DEVICE_CODE_VALUE',
+              codi:llegirCodiDispositiu_()
+            },
+            '*'
+          );
+        }catch(e){}
+        return;
+      }
 
       if(d.tipus==='EMP_USR_SET_ID'){
         return;
@@ -642,6 +699,17 @@
       // L'HTML d'Apps Script ja és visible. No esperem dades de Sheets:
       // l'app mostrarà el seu propi estat "Carregant..." dins del contingut.
       amagarLoader();
+
+      try{
+        frame.contentWindow.postMessage(
+          {
+            tipus:'ZH_DEVICE_CODE_VALUE',
+            codi:llegirCodiDispositiu_()
+          },
+          '*'
+        );
+      }catch(e){}
+
       enviarId();
       setTimeout(enviarId,180);
       setTimeout(enviarId,700);
