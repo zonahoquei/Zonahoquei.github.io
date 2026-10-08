@@ -312,16 +312,17 @@
       return out.slice(0,RPC_MAX_ENTRADES);
     }
 
-    function rpcEnviarAlFrame(){
-      if(rpcEnviat || !frame || !frame.contentWindow)return;
+    function rpcEnviarAlFrame(destinatari){
+      destinatari=destinatari&&destinatari.postMessage?destinatari:(frame&&frame.contentWindow);
+      if(!destinatari || rpcEnviat===destinatari)return;
 
       var entrades=rpcLlegir();
-      rpcEnviat=true;
+      rpcEnviat=destinatari;
 
       if(!entrades.length)return;
 
       try{
-        frame.contentWindow.postMessage({
+        destinatari.postMessage({
           tipus:'ZH_RPC_CACHE_BULK',
           entrades:entrades
         },'*');
@@ -453,16 +454,34 @@
       }
     },500);
 
+    function missatgeDelFrame(e){
+      if(!frame || !e.source)return false;
+      if(!/^https:\/\/(?:script\.google\.com|[a-z0-9-]+-script\.googleusercontent\.com)$/.test(e.origin))return false;
+      // Comprova la descendència del nostre iframe, també amb els marcs de Google.
+      try{
+        var origen=e.source;
+        for(var i=0;i<8;i++){
+          if(origen===frame.contentWindow)return true;
+          var pare=origen.parent;
+          if(!pare || pare===origen || pare===window)return false;
+          origen=pare;
+        }
+      }catch(err){}
+      return false;
+    }
+
     window.addEventListener('message',function(e){
-      if(!frame||e.source!==frame.contentWindow)return;
+      if(!missatgeDelFrame(e))return;
+      var destinatari=e.source;
 
       var d=e.data||{};
 
       if(d.tipus==='ZH_DEVICE_CODE_GET'){
+        rpcEnviarAlFrame(destinatari);
         var codiMem=llegirCodiDispositiu_();
         if(codiMem && llegirRecordarCodi_()){
           try{
-            frame.contentWindow.postMessage({
+            destinatari.postMessage({
               tipus:'ZH_DEVICE_CODE_VALUE',
               codi:codiMem,
               recordar:true
@@ -474,7 +493,7 @@
         cacheCodiLlegir_().then(function(codiCache){
           if(codiCache)guardarCodiDispositiu_(codiCache,true);
           try{
-            frame.contentWindow.postMessage({
+            destinatari.postMessage({
               tipus:'ZH_DEVICE_CODE_VALUE',
               codi:codiCache||'',
               recordar:!!codiCache
@@ -491,7 +510,7 @@
         );
 
         try{
-          frame.contentWindow.postMessage(
+          destinatari.postMessage(
             {
               tipus:'ZH_DEVICE_CODE_VALUE',
               codi:llegirCodiDispositiu_(),
@@ -508,6 +527,7 @@
       }
 
       if(d.tipus==='ZH_DOCUMENT_READY' || d.tipus==='ZH_APP_READY'){
+        rpcEnviarAlFrame(destinatari);
         if(zhDiag.appReadyMs==null){
           zhDiag.appReadyMs=Date.now()-zhDiag.iniciMs;
           zhDiagGuardar();
