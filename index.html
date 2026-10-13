@@ -74,6 +74,15 @@
       font-size:14px;font-weight:850;
       font-variant-numeric:tabular-nums;
     }
+    #zh-shell-loader.amb-partits{display:block;overflow:auto;padding:18px 0;}
+    #zh-shell-home{width:min(1120px,92vw);margin:0 auto;}
+    .zh-home-cap{text-align:center;margin:10px 0 20px;}.zh-home-cap img{width:150px;max-width:45vw;height:auto;}
+    .zh-home-cap h1{font-size:23px;margin:10px 0;}.zh-home-cap p{color:#bcd2e8;font-size:13px;margin:8px 0;}
+    .zh-home-partit{background:#fff;color:#143c6c;border-radius:20px;padding:18px;margin:12px 0;border-left:6px solid #5d87b5;}
+    .zh-home-meta{font-size:13px;font-weight:700;color:#526f8e;margin-bottom:10px;}
+    .zh-home-equips{display:flex;align-items:center;gap:12px;font-weight:850;font-size:18px;}.zh-home-equips span{flex:1;}
+    .zh-home-equips b{white-space:nowrap;background:#eef4fa;border-radius:12px;padding:8px 12px;font-size:18px;}
+    @media(max-width:600px){.zh-home-partit{padding:14px;}.zh-home-equips{font-size:16px;}.zh-home-cap h1{font-size:20px;}}
     @keyframes zhShellSpin{to{transform:rotate(360deg)}}
 
     #emp-pro{
@@ -88,7 +97,8 @@
 <body>
 
   <div id="zh-shell-loader" role="status" aria-live="polite">
-    <div class="zh-shell-box">
+    <div id="zh-shell-home" hidden></div>
+    <div id="zh-shell-box" class="zh-shell-box">
       <div class="zh-shell-spinner"></div>
       <div class="zh-shell-title">Carregant ZonaHoquei...</div>
       <div class="zh-shell-sub">Preparant els teus partits</div>
@@ -118,6 +128,7 @@
     var inici=Date.now();
     var timer=null;
     var loaderFora=false;
+    var previewMostrada=false;
 
     /*
      * V5.3 — diagnòstic lleuger d'arrencada.
@@ -203,6 +214,66 @@
       return 2*60*1000;
     }
 
+    var HOME_PREVIEW_KEY='ZH_HOME_PREVIEW_V1';
+    var FAVORITS_PREVIEW_KEY='ZH_FAVORITS_PREVIEW_V1';
+    var RPC_PANTALLES={obtenirPartitsApp:1,obtenirResultatsApp:1,obtenirAlMinutApp:1,obtenirClassificacionsApp:1,EMP_JUGADORS_BD26_obtenir:1,EMP_JUGADORS_BD26_obtenirLleuger:1};
+    function rpcOrdenar(items){
+      items.sort(function(a,b){return Number(b.temps||0)-Number(a.temps||0);});
+      var reservats=items.filter(function(x){return RPC_PANTALLES[x.nom];}).slice(0,6);
+      return items.sort(function(a,b){return (reservats.indexOf(b)>=0)-(reservats.indexOf(a)>=0)||Number(b.temps||0)-Number(a.temps||0);});
+    }
+    function previewsLlegir(){
+      try{return (JSON.parse(localStorage.getItem(HOME_PREVIEW_KEY)||'[]')||[]).filter(function(x){return x&&x.temps&&Date.now()-x.temps<86400000;});}catch(e){return [];}
+    }
+    function previewGuardar(d){
+      if(!d||!llegirRecordarCodi_()||d.nom!=='obtenirPartitsApp'||!d.dades||!d.dades.ok||!d.args||d.args[2])return;
+      var items=previewsLlegir().filter(function(x){return x.args[1]!==d.args[1]||x.dades.dataInicial!==d.dades.dataInicial;});
+      items.unshift({nom:d.nom,args:d.args,temps:d.temps,dades:d.dades});
+      items=items.slice(0,4);while(items.length&&JSON.stringify(items).length>600000)items.pop();
+      try{localStorage.setItem(HOME_PREVIEW_KEY,JSON.stringify(items));}catch(e){}
+    }
+    function primeraVistaGuardada(){
+      var codi=llegirCodiDispositiu_();
+      if(!llegirRecordarCodi_()||!/^\d{4,12}$/.test(codi))return null;
+      var uid='USR_AUTO_'+('0'+codi.length.toString(16)).slice(-2)+('00000000000000'+codi).slice(-14);
+      var avui=new Date(),d=new Date(avui.getFullYear(),avui.getMonth(),avui.getDate());
+      d.setDate(d.getDate()+(d.getDay()===0?-6:1-d.getDay()));
+      var inici=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      return previewsLlegir().find(function(x){return x.args&&x.args[1]===uid&&!x.args[2]&&x.dades&&x.dades.ok&&x.dades.dataInicial===inici;})||null;
+    }
+    function htmlPrimeraVista(x,f){
+      function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+      function dia(v){var a=String(v||'').split('-');return a.length===3?a[2]+'/'+a[1]+'/'+a[0]:v;}
+      var d=x.dades,colors=f&&f.idUsuari===x.args[1]&&f.favorits?f.favorits.colorsEquips||{}:{};
+      var html='<div class="zh-home-cap"><img src="./ZH-Zona-Hoquei-App-logo-300px.png" alt="ZonaHoquei"><h1>Els meus partits</h1><p>'+esc(dia(d.dataInicial))+' · '+esc(dia(d.dataFinal))+'</p><p>Dades guardades · Preparant l’app i comprovant actualització…</p></div>';
+      if(!d.partits||!d.partits.length)return html+'<div class="zh-home-partit">No hi ha partits aquesta setmana.</div>';
+      return html+d.partits.slice(0,12).map(function(p){
+        var color=colors[p.idEquipLocal]||colors[p.idEquipVisitant]||'',estil='';
+        if(/^#[a-f0-9]{6}$/i.test(color)){
+          var rgb=[1,3,5].map(function(i){return parseInt(color.slice(i,i+2),16);});
+          var suau='rgb('+rgb.map(function(n){return Math.round(n*.18+255*.82);}).join(',')+')';
+          estil=' style="border-left-color:'+color+';background:'+suau+'"';
+        }
+        return '<article class="zh-home-partit"'+estil+'><div class="zh-home-meta">'+esc(dia(p.data))+' · '+esc(p.hora)+' · '+esc(p.categoria)+'</div><div class="zh-home-equips"><span>'+esc(p.local)+' — '+esc(p.visitant)+'</span><b>'+esc(p.resultat&&p.resultat!=='-'&&p.resultat!=='—'?p.resultat:'Pendent')+'</b></div></article>';
+      }).join('');
+    }
+    function mostrarPrimeraVista(){
+      if(loaderFora||previewMostrada)return;
+      var x=primeraVistaGuardada(),zona=document.getElementById('zh-shell-home');
+      if(!x||!zona)return;
+      var f=null;try{f=JSON.parse(localStorage.getItem(FAVORITS_PREVIEW_KEY)||'null');}catch(e){}
+      zona.innerHTML=htmlPrimeraVista(x,f);zona.hidden=false;
+      var box=document.getElementById('zh-shell-box');if(box)box.hidden=true;
+      loader.classList.add('amb-partits');previewMostrada=true;
+      zhDiag.homeGuardadaMs=Date.now()-zhDiag.iniciMs;zhDiagGuardar();
+    }
+
+    function dadesSessioCache_(){
+      if(!llegirRecordarCodi_())return {};
+      var f=null;try{f=JSON.parse(localStorage.getItem(FAVORITS_PREVIEW_KEY)||'null');}catch(e){}
+      return {previewPartits:previewsLlegir(),favoritsCache:f&&Date.now()-f.temps<86400000?f:null};
+    }
+
     function rpcHash(s){
       var h=2166136261;
       for(var i=0;i<s.length;i++){
@@ -239,11 +310,11 @@
             continue;
           }
 
-          items.push({k:k,temps:Number(x.temps||0),mida:raw.length});
+          items.push({k:k,nom:x.nom,temps:Number(x.temps||0),mida:raw.length});
         }
       }catch(e){}
 
-      items.sort(function(a,b){return b.temps-a.temps;});
+      rpcOrdenar(items);
 
       var total=0;
       items.forEach(function(x,idx){
@@ -255,6 +326,7 @@
     }
 
     function rpcGuardar(d){
+      previewGuardar(d);
       if(!d || !RPC_PERSISTIBLES[d.nom])return;
 
       var x={
@@ -276,6 +348,7 @@
     }
 
     function rpcEsborrarTot(){
+      try{localStorage.removeItem(HOME_PREVIEW_KEY);}catch(e){}
       try{
         for(var i=localStorage.length-1;i>=0;i--){
           var k=localStorage.key(i);
@@ -305,9 +378,7 @@
         }
       }catch(e){}
 
-      out.sort(function(a,b){
-        return Number(b.temps||0)-Number(a.temps||0);
-      });
+      rpcOrdenar(out);
 
       return out.slice(0,RPC_MAX_ENTRADES);
     }
@@ -404,6 +475,7 @@
         .substring(0,12);
 
       recordar=!!recordar;
+      if(!recordar){try{localStorage.removeItem(HOME_PREVIEW_KEY);localStorage.removeItem(FAVORITS_PREVIEW_KEY);}catch(e){}}
 
       cacheCodiGuardar_(codi,recordar);
 
@@ -430,7 +502,8 @@
       }
     }
 
-    function amagarLoader(){
+    function amagarLoader(forcar){
+      if(previewMostrada&&zhDiag.homeReadyMs==null&&!forcar)return;
       if(loaderFora)return;
       loaderFora=true;
 
@@ -481,17 +554,16 @@
         var codiMem=llegirCodiDispositiu_();
         if(codiMem && llegirRecordarCodi_()){
           try{
-            destinatari.postMessage({
-              tipus:'ZH_DEVICE_CODE_VALUE',
-              codi:codiMem,
-              recordar:true
-            },'*');
+            destinatari.postMessage(Object.assign({
+              tipus:'ZH_DEVICE_CODE_VALUE',codi:codiMem,recordar:true
+            },dadesSessioCache_()),'*');
           }catch(e){}
           return;
         }
 
         cacheCodiLlegir_().then(function(codiCache){
           if(codiCache)guardarCodiDispositiu_(codiCache,true);
+          mostrarPrimeraVista();
           try{
             destinatari.postMessage({
               tipus:'ZH_DEVICE_CODE_VALUE',
@@ -535,6 +607,18 @@
 
         amagarLoader();
         return;
+      }
+
+      if(d.tipus==='ZH_FAVORITS_CACHE_SET'){
+        if(idValid(d.idUsuari)&&d.favorits&&llegirRecordarCodi_()){
+          try{localStorage.setItem(FAVORITS_PREVIEW_KEY,JSON.stringify({idUsuari:d.idUsuari,temps:Date.now(),favorits:d.favorits}));}catch(e){}
+        }
+        return;
+      }
+      if(d.tipus==='ZH_HOME_READY'){
+        if(zhDiag.homeReadyMs==null)zhDiag.homeReadyMs=Date.now()-zhDiag.iniciMs;
+        if(d.etapa==='actual'&&zhDiag.homeActualMs==null)zhDiag.homeActualMs=Date.now()-zhDiag.iniciMs;
+        zhDiagGuardar();amagarLoader();return;
       }
 
       if(d.tipus==='ZH_RPC_CACHE_SET'){
@@ -586,7 +670,8 @@
     // Enviem la identitat tan aviat com sigui possible.
 
     // Seguretat: si mai no arriba ZH_APP_READY, no bloquegem la PWA.
-    setTimeout(amagarLoader,4000);
+    mostrarPrimeraVista();
+    setTimeout(function(){amagarLoader(true);},4000);
 
     window.ZH_DIAG_MOSTRAR=function(){
       var r={
