@@ -107,7 +107,7 @@
   </div>
 
   <iframe id="emp-pro"
-          src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          src="./app207.html" data-classic-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -119,6 +119,7 @@
     'use strict';
 
     var frame=document.getElementById('emp-pro');
+    if(new URLSearchParams(location.search).get('classic')==='1')frame.src=frame.dataset.classicSrc;
     var ZH_DEVICE_CODE_KEY='ZH_DEVICE_CODE_V1';
     var ZH_DEVICE_CODE_REMEMBER_KEY='ZH_DEVICE_CODE_REMEMBER_V1';
     var ZH_DEVICE_CODE_CACHE='zh-device-code-v1';
@@ -529,6 +530,7 @@
 
     function missatgeDelFrame(e){
       if(!frame || !e.source)return false;
+      if(e.origin===location.origin&&e.source===frame.contentWindow)return true;
       if(!/^https:\/\/(?:script\.google\.com|[a-z0-9-]+-script\.googleusercontent\.com)$/.test(e.origin))return false;
       // Comprova la descendència del nostre iframe, també amb els marcs de Google.
       try{
