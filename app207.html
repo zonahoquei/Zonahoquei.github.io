@@ -1113,22 +1113,15 @@ jugadorBase,
 {totsJugadors:true}
 );
 pla=[
-{pas:'2–6. Setmanes equips, clubs, Agenda i Al minut',nom:'EMP_APP_BOOTSTRAP',args:[idUsuari,data],primeBootstrap:true,rapid:true},
 {pas:'7. Classificació · fases favorites',nom:'obtenirClassificacionsApp',args:[classFav,idUsuari],recollirClassificacions:true},
-{pas:'8. Jugadors favorits',nom:'EMP_JUGADORS_BD26_obtenir',args:[jugadorFav,idUsuari],recollirFitxesFav:true},
-{tipus:'marker',pas:'9. Actes Els Meus Partits',accio:'ACTES_EQUIPS'},
-{tipus:'marker',pas:'10. Actes Agenda',accio:'ACTES_AGENDA'},
-{tipus:'marker',pas:'11. Actes Al minut',accio:'ACTES_MINUT'},
-{tipus:'marker',pas:'12. Enllaços Classificació',accio:'CLASS_ENLLACOS'},
-{tipus:'marker',pas:'13. Fitxes jugadors favorits',accio:'FITXES_FAVORITS'},
-{tipus:'marker',pas:'14. Partits de les fitxes',accio:'ACTES_FITXES'}
+{pas:'8. Jugadors favorits',nom:'EMP_JUGADORS_BD26_obtenir',args:[jugadorFav,idUsuari],recollirFitxesFav:true}
 ];
 if(timer)clearTimeout(timer);
 timer=setTimeout(function(){
 if(meuToken===token){
 executarSeguent();
 }
-},180);
+},8000);
 }
 window.EMP_PRELOAD_ZH={
 iniciar:iniciar,
@@ -4754,11 +4747,17 @@ document.addEventListener('visibilitychange',refrescarVisible);
     <div id="zh-perfil-favorits" class="zh-perfil-favorits">
       <div class="zh-perfil-fav-carregant">Carregant favorits…</div>
     </div>
+    <div class="zh-push-bloc">
+      <strong>Notificacions dels teus favorits</strong>
+      <p id="zh-push-estat" aria-live="polite">Activa els avisos d’inici, gols, targetes, penals, faltes directes i final dels partits dels teus favorits.</p>
+      <button type="button" id="zh-push-activar">Activar notificacions</button>
+    </div>
     <p class="zh-perfil-ajuda">A iPhone pots desar aquest codi a Contrasenyes i recuperar-lo amb Face ID.</p>
     <button type="button" id="zh-perfil-canviar">Modificar codi</button>
   </section>
 </div>
 <style id="zh-v34-83-perfil-css">#zh-perfil-modal{display:none;position:fixed;inset:0;z-index:420000;padding:max(18px,env(safe-area-inset-top)) 12px max(18px,env(safe-area-inset-bottom));box-sizing:border-box} #zh-perfil-modal.obert{display:flex;align-items:center;justify-content:center} #zh-perfil-modal .zh-perfil-fons{position:absolute;inset:0;background:rgba(2,18,34,.78);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)} #zh-perfil-modal .zh-perfil-card{position:relative;z-index:1;width:min(480px,100%);padding:22px;box-sizing:border-box;border-radius:22px;background:#f7fbff;color:#173c67;box-shadow:0 18px 60px rgba(0,0,0,.35)} #zh-perfil-modal .zh-perfil-tancar{position:absolute;right:14px;top:12px;width:38px;height:38px;border:0;border-radius:50%;background:#e6eef7;color:#173c67;font-size:25px;font-weight:900} #zh-perfil-modal h2{margin:0 44px 8px 0;font-size:24px} #zh-perfil-modal p{color:#526d88;line-height:1.35} .zh-perfil-codi-wrap{margin:18px 0;padding:16px;border-radius:16px;background:#eaf4ff;border:1px solid #bdd7ee} .zh-perfil-codi-wrap span{display:block;font-size:12px;font-weight:850;text-transform:uppercase} .zh-perfil-codi-wrap strong{display:block;margin-top:5px;font-size:28px;letter-spacing:2px;color:#123b70} #zh-perfil-canviar{width:100%;min-height:48px;border:0;border-radius:13px;background:#0d5ea6;color:#fff;font:inherit;font-weight:950} .zh-perfil-favorits{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0} .zh-perfil-fav-bloc{min-width:0;padding:10px 11px;border-radius:13px;background:#f1f6fb;border:1px solid #d3e1ee} .zh-perfil-fav-titol{font-size:12px;font-weight:950;color:#173c67;margin-bottom:6px} .zh-perfil-fav-llista{font-size:12px;line-height:1.35;color:#526d88} .zh-perfil-fav-item{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .zh-perfil-fav-buit{font-size:12px;color:#8aa0b5} .zh-perfil-fav-carregant{grid-column:1/-1;font-size:12px;color:#6d849b} @media(max-width:520px){#zh-perfil-modal .zh-perfil-card{max-height:88dvh;overflow:auto}.zh-perfil-favorits{grid-template-columns:1fr}}</style>
+<style id="zh-push-css">.zh-push-bloc{margin:12px 0;padding:14px;border:1px solid #c9dbea;border-radius:15px;background:#eef6fd}.zh-push-bloc strong{display:block;font-size:14px}.zh-push-bloc p{margin:5px 0 10px;font-size:12px}.zh-push-bloc button{width:100%;min-height:44px;border:0;border-radius:12px;background:#0d5ea6;color:#fff;font:inherit;font-weight:900}.zh-push-bloc button:disabled{opacity:.65}</style>
 <script id="zh-v34-85-perfil-js">(function(){
 function modal(){return document.getElementById('zh-perfil-modal');}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -4837,6 +4836,36 @@ if(e.target.classList&&e.target.classList.contains('zh-perfil-fons')){tancar();r
 var canviar=e.target.closest&&e.target.closest('#zh-perfil-canviar');
 if(canviar){e.preventDefault();tancar();if(window.EMP_USR_APP&&window.EMP_USR_APP.canviarCodiDispositiu)window.EMP_USR_APP.canviarCodiDispositiu();}
 });
+})();</script>
+<script id="zh-push-client-js">(function(){
+'use strict';
+var cfg={apiKey:'AIzaSyC4DpGAeENPsA5Lypnt511L5VpJLT3JVTg',authDomain:'zona-hoquei-notifications.firebaseapp.com',projectId:'zona-hoquei-notifications',storageBucket:'zona-hoquei-notifications.firebasestorage.app',messagingSenderId:'320069813841',appId:'1:320069813841:web:82084c784aea11b71a1a70'};
+var vapid='BDOZ6EYWWGb0sKfXutzpSs7qSjhxfSTOTIIyPzCPLANmBkd6IqF_0YMts4SGiN92jNwk-QbVey6dnx1IpfR_MMY';
+var savedKey='ZH_PUSH_TOKEN_V1',loading=null;
+function el(id){return document.getElementById(id);}
+function status(text){var x=el('zh-push-estat');if(x)x.textContent=text;}
+function button(text,disabled){var x=el('zh-push-activar');if(x){x.textContent=text;x.disabled=!!disabled;}}
+function ready(){
+if(loading)return loading;
+loading=new Promise(function(resolve,reject){
+function init(){try{if(!window.firebase)throw new Error('No s’ha pogut carregar el servei de notificacions.');if(!firebase.apps.length)firebase.initializeApp(cfg);resolve(firebase.messaging());}catch(e){reject(e);}}
+if(window.firebase){init();return;}
+var a=document.createElement('script');a.src='https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js';a.onload=function(){var m=document.createElement('script');m.src='https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js';m.onload=init;m.onerror=function(){reject(new Error('No s’ha pogut carregar el servei de notificacions.'));};document.head.appendChild(m);};a.onerror=function(){reject(new Error('No s’ha pogut carregar el servei de notificacions.'));};document.head.appendChild(a);
+});return loading;
+}
+function rpc(name,args){return new Promise(function(resolve,reject){var r=window.EMP_RPC().withSuccessHandler(resolve).withFailureHandler(reject);r[name].apply(r,args);});}
+function idUsuari(){return window.EMP_USR_APP&&window.EMP_USR_APP.obtenirIdUsuari?String(window.EMP_USR_APP.obtenirIdUsuari()||''):'';}
+function activar(){
+var uid=idUsuari();if(!uid){status('Identifica’t amb el teu codi per activar els avisos.');return;}
+if(!('serviceWorker'in navigator)||!('Notification'in window)){status('Aquest navegador no permet notificacions push.');return;}
+if(('standalone'in navigator)&&!navigator.standalone&&!window.matchMedia('(display-mode: standalone)').matches&&/iPhone|iPad|iPod/.test(navigator.userAgent)){status('Afegeix ZonaHoquei a la pantalla d’inici per activar els avisos a l’iPhone.');return;}
+button('Activant…',true);status('Demanant permís per enviar notificacions…');
+Notification.requestPermission().then(function(permission){if(permission!=='granted')throw new Error('No s’ha concedit permís per mostrar notificacions.');return ready();}).then(function(messaging){return navigator.serviceWorker.register('/firebase-messaging-sw.js').then(function(reg){return messaging.getToken({vapidKey:vapid,serviceWorkerRegistration:reg});});}).then(function(token){if(!token)throw new Error('No s’ha pogut registrar aquest dispositiu.');return rpc('EMP_PUSH26_REGISTRAR',[uid,token,navigator.userAgent]).then(function(){localStorage.setItem(savedKey,token);status('Avisos activats per als partits dels teus favorits.');button('Desactivar notificacions',false);});}).catch(function(e){status(e&&e.message?e.message:'No s’han pogut activar els avisos.');button('Activar notificacions',false);});
+}
+function desactivar(){var uid=idUsuari(),token='';try{token=localStorage.getItem(savedKey)||'';}catch(e){}button('Desactivant…',true);Promise.resolve().then(function(){return token?rpc('EMP_PUSH26_ELIMINAR',[uid,token]):null;}).then(function(){return ready();}).then(function(m){return m.deleteToken();}).catch(function(){}).then(function(){try{localStorage.removeItem(savedKey);}catch(e){}status('Avisos desactivats en aquest dispositiu.');button('Activar notificacions',false);});}
+document.addEventListener('click',function(e){if(!e.target.closest||!e.target.closest('#zh-push-activar'))return;e.preventDefault();var token='';try{token=localStorage.getItem(savedKey)||'';}catch(err){}if(token)desactivar();else activar();});
+function restore(){var token='';try{token=localStorage.getItem(savedKey)||'';}catch(e){}if(token){status('Avisos activats per als partits dels teus favorits en aquest dispositiu.');button('Desactivar notificacions',false);}}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restore);else restore();
 })();</script>
 
 <div id="zh-suggeriments-modal" aria-hidden="true">
