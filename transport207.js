@@ -1,6 +1,6 @@
 (function(){
   'use strict';
-  var methods=new Set(["EMP_ACTES_BD_26_ACTUALITZAR_IDP","EMP_APP_BD26_ACTUALITZAR_PARTITS","EMP_APP_BD26_ESTAT_ACTUALITZACIO_PARTITS","EMP_APP_BD26_obtenirActa","EMP_APP_BD26_obtenirActes","EMP_APP_BD26_obtenirPartitsClubs","EMP_APP_BD26_precarregarAlMinutAgenda","EMP_APP_BOOTSTRAP","EMP_JUGADORS_BD26_detall","EMP_JUGADORS_BD26_detalls","EMP_JUGADORS_BD26_obtenir","EMP_JUGADORS_BD26_obtenirLleuger","EMP_LIVE_ACTUALITZAR_ADMIN","EMP_SUGGERIMENTS_ENVIAR","EMP_USR_guardarFavorits","EMP_USR_identificarPerTelefon","EMP_USR_obtenirCataleg","EMP_USR_obtenirCatalegJugadors","EMP_USR_obtenirCatalegJugadorsLleuger","EMP_USR_obtenirFavorits","EMP_USR_registrarUsuari","EMP_USR_restaurarSessio","actualitzarClassificacionsApp","obtenirAlMinutApp","obtenirClassificacionsApp","obtenirPartitsApp","obtenirResultatsApp"]);
+  var methods=new Set(["EMP_PUSH26_REGISTRAR","EMP_PUSH26_ELIMINAR","EMP_PUSH26_CONSENTIMENT_REGISTRAR","EMP_ACTES_BD_26_ACTUALITZAR_IDP","EMP_APP_BD26_ACTUALITZAR_PARTITS","EMP_APP_BD26_ESTAT_ACTUALITZACIO_PARTITS","EMP_APP_BD26_obtenirActa","EMP_APP_BD26_obtenirActes","EMP_APP_BD26_obtenirPartitsClubs","EMP_APP_BD26_precarregarAlMinutAgenda","EMP_APP_BOOTSTRAP","EMP_JUGADORS_BD26_detall","EMP_JUGADORS_BD26_detalls","EMP_JUGADORS_BD26_obtenir","EMP_JUGADORS_BD26_obtenirLleuger","EMP_LIVE_ACTUALITZAR_ADMIN","EMP_SUGGERIMENTS_ENVIAR","EMP_USR_guardarFavorits","EMP_USR_identificarPerTelefon","EMP_USR_obtenirCataleg","EMP_USR_obtenirCatalegJugadors","EMP_USR_obtenirCatalegJugadorsLleuger","EMP_USR_obtenirFavorits","EMP_USR_registrarUsuari","EMP_USR_restaurarSessio","actualitzarClassificacionsApp","obtenirAlMinutApp","obtenirClassificacionsApp","obtenirPartitsApp","obtenirResultatsApp"]);
   var url='https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec?bridge=207';
   var bytes=new Uint32Array(4);crypto.getRandomValues(bytes);
   var token=Array.from(bytes).map(function(n){return n.toString(16);}).join('-');
@@ -11,7 +11,7 @@
   function finish(id,ok,value){var p=pending.get(id);if(!p)return;pending.delete(id);clearTimeout(p.timer);var f=ok?p.success:p.failure;if(f)f(value,p.user);else if(!ok)console.error(value.message);}
   function send(q){peer.postMessage({tipus:'ZH_BRIDGE_CALL',token:token,id:q.id,nom:q.nom,args:q.args},origin);}
   window.addEventListener('message',function(e){
-    if(!/^https:\/\/(?:script\.google\.com|[a-z0-9-]+-script\.googleusercontent\.com)$/.test(e.origin)||!descendant(e.source))return;
+    if(!/^https:[/][/](?:script[.]google[.]com|[a-z0-9-]+-script[.]googleusercontent[.]com)$/.test(e.origin)||!descendant(e.source))return;
     var d=e.data||{};
     if(d.tipus==='ZH_BRIDGE_READY'&&d.versio===207){
       if(peer&&peer!==e.source)return;peer=e.source;origin=e.origin;
