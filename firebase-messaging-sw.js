@@ -16,7 +16,11 @@ messaging.onBackgroundMessage(function(payload) {
   const notification = payload.notification || {};
   self.registration.showNotification(notification.title || 'ZonaHoquei', {
     body: notification.body || 'Hi ha novetats d’un dels teus favorits.',
-    icon: '/favicon.ico',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    lang: 'ca',
+    dir: 'ltr',
+    vibrate: [120, 60, 120],
     data: { url: payload.fcmOptions && payload.fcmOptions.link || 'https://zonahoquei.github.io/' }
   });
 });
