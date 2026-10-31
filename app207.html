@@ -4750,6 +4750,7 @@ document.addEventListener('visibilitychange',refrescarVisible);
     <div class="zh-push-bloc">
       <strong>Notificacions dels teus favorits</strong>
       <p id="zh-push-estat" aria-live="polite">Activa els avisos d’inici, gols, targetes, penals, faltes directes i final dels partits dels teus favorits.</p>
+      <label class="zh-push-consent"><input type="checkbox" id="zh-push-consent"> <span>Accepto rebre notificacions d’inici i final de partit, gols, targetes, penals i faltes directes dels meus favorits. Puc desactivar-les en qualsevol moment.</span></label>
       <button type="button" id="zh-push-activar">Activar notificacions</button>
     </div>
     <p class="zh-perfil-ajuda">A iPhone pots desar aquest codi a Contrasenyes i recuperar-lo amb Face ID.</p>
@@ -4757,7 +4758,7 @@ document.addEventListener('visibilitychange',refrescarVisible);
   </section>
 </div>
 <style id="zh-v34-83-perfil-css">#zh-perfil-modal{display:none;position:fixed;inset:0;z-index:420000;padding:max(18px,env(safe-area-inset-top)) 12px max(18px,env(safe-area-inset-bottom));box-sizing:border-box} #zh-perfil-modal.obert{display:flex;align-items:center;justify-content:center} #zh-perfil-modal .zh-perfil-fons{position:absolute;inset:0;background:rgba(2,18,34,.78);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)} #zh-perfil-modal .zh-perfil-card{position:relative;z-index:1;width:min(480px,100%);padding:22px;box-sizing:border-box;border-radius:22px;background:#f7fbff;color:#173c67;box-shadow:0 18px 60px rgba(0,0,0,.35)} #zh-perfil-modal .zh-perfil-tancar{position:absolute;right:14px;top:12px;width:38px;height:38px;border:0;border-radius:50%;background:#e6eef7;color:#173c67;font-size:25px;font-weight:900} #zh-perfil-modal h2{margin:0 44px 8px 0;font-size:24px} #zh-perfil-modal p{color:#526d88;line-height:1.35} .zh-perfil-codi-wrap{margin:18px 0;padding:16px;border-radius:16px;background:#eaf4ff;border:1px solid #bdd7ee} .zh-perfil-codi-wrap span{display:block;font-size:12px;font-weight:850;text-transform:uppercase} .zh-perfil-codi-wrap strong{display:block;margin-top:5px;font-size:28px;letter-spacing:2px;color:#123b70} #zh-perfil-canviar{width:100%;min-height:48px;border:0;border-radius:13px;background:#0d5ea6;color:#fff;font:inherit;font-weight:950} .zh-perfil-favorits{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:14px 0} .zh-perfil-fav-bloc{min-width:0;padding:10px 11px;border-radius:13px;background:#f1f6fb;border:1px solid #d3e1ee} .zh-perfil-fav-titol{font-size:12px;font-weight:950;color:#173c67;margin-bottom:6px} .zh-perfil-fav-llista{font-size:12px;line-height:1.35;color:#526d88} .zh-perfil-fav-item{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .zh-perfil-fav-buit{font-size:12px;color:#8aa0b5} .zh-perfil-fav-carregant{grid-column:1/-1;font-size:12px;color:#6d849b} @media(max-width:520px){#zh-perfil-modal .zh-perfil-card{max-height:88dvh;overflow:auto}.zh-perfil-favorits{grid-template-columns:1fr}}</style>
-<style id="zh-push-css">.zh-push-bloc{margin:12px 0;padding:14px;border:1px solid #c9dbea;border-radius:15px;background:#eef6fd}.zh-push-bloc strong{display:block;font-size:14px}.zh-push-bloc p{margin:5px 0 10px;font-size:12px}.zh-push-bloc button{width:100%;min-height:44px;border:0;border-radius:12px;background:#0d5ea6;color:#fff;font:inherit;font-weight:900}.zh-push-bloc button:disabled{opacity:.65}</style>
+<style id="zh-push-css">.zh-push-bloc{margin:12px 0;padding:14px;border:1px solid #c9dbea;border-radius:15px;background:#eef6fd}.zh-push-bloc strong{display:block;font-size:14px}.zh-push-bloc p{margin:5px 0 10px;font-size:12px}.zh-push-consent{display:flex;align-items:flex-start;gap:8px;margin:0 0 12px;font-size:12px;line-height:1.35;color:#385675}.zh-push-consent input{flex:0 0 auto;margin:2px 0 0;accent-color:#0d5ea6}.zh-push-bloc button{width:100%;min-height:44px;border:0;border-radius:12px;background:#0d5ea6;color:#fff;font:inherit;font-weight:900}.zh-push-bloc button:disabled{opacity:.65}</style>
 <script id="zh-v34-85-perfil-js">(function(){
 function modal(){return document.getElementById('zh-perfil-modal');}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
@@ -4857,14 +4858,15 @@ function rpc(name,args){return new Promise(function(resolve,reject){var r=window
 function idUsuari(){return window.EMP_USR_APP&&window.EMP_USR_APP.obtenirIdUsuari?String(window.EMP_USR_APP.obtenirIdUsuari()||''):'';}
 function activar(){
 var uid=idUsuari();if(!uid){status('Identifica’t amb el teu codi per activar els avisos.');return;}
+var consent=el('zh-push-consent');if(!consent||!consent.checked){status('Marca la casella de consentiment per activar les notificacions.');return;}
 if(!('serviceWorker'in navigator)||!('Notification'in window)){status('Aquest navegador no permet notificacions push.');return;}
 if(('standalone'in navigator)&&!navigator.standalone&&!window.matchMedia('(display-mode: standalone)').matches&&/iPhone|iPad|iPod/.test(navigator.userAgent)){status('Afegeix ZonaHoquei a la pantalla d’inici per activar els avisos a l’iPhone.');return;}
 button('Activant…',true);status('Demanant permís per enviar notificacions…');
-Notification.requestPermission().then(function(permission){if(permission!=='granted')throw new Error('No s’ha concedit permís per mostrar notificacions.');return ready();}).then(function(messaging){return navigator.serviceWorker.register('/firebase-messaging-sw.js').then(function(reg){return messaging.getToken({vapidKey:vapid,serviceWorkerRegistration:reg});});}).then(function(token){if(!token)throw new Error('No s’ha pogut registrar aquest dispositiu.');return rpc('EMP_PUSH26_REGISTRAR',[uid,token,navigator.userAgent]).then(function(){localStorage.setItem(savedKey,token);status('Avisos activats per als partits dels teus favorits.');button('Desactivar notificacions',false);});}).catch(function(e){status(e&&e.message?e.message:'No s’han pogut activar els avisos.');button('Activar notificacions',false);});
+Notification.requestPermission().then(function(permission){if(permission!=='granted')throw new Error('No s’ha concedit permís per mostrar notificacions.');return ready();}).then(function(messaging){return navigator.serviceWorker.register('/firebase-messaging-sw.js').then(function(reg){return messaging.getToken({vapidKey:vapid,serviceWorkerRegistration:reg});});}).then(function(token){if(!token)throw new Error('No s’ha pogut registrar aquest dispositiu.');return rpc('EMP_PUSH26_REGISTRAR',[uid,token,navigator.userAgent,true]).then(function(){localStorage.setItem(savedKey,token);status('Avisos activats per als partits dels teus favorits.');button('Desactivar notificacions',false);});}).catch(function(e){status(e&&e.message?e.message:'No s’han pogut activar els avisos.');button('Activar notificacions',false);});
 }
 function desactivar(){var uid=idUsuari(),token='';try{token=localStorage.getItem(savedKey)||'';}catch(e){}button('Desactivant…',true);Promise.resolve().then(function(){return token?rpc('EMP_PUSH26_ELIMINAR',[uid,token]):null;}).then(function(){return ready();}).then(function(m){return m.deleteToken();}).catch(function(){}).then(function(){try{localStorage.removeItem(savedKey);}catch(e){}status('Avisos desactivats en aquest dispositiu.');button('Activar notificacions',false);});}
 document.addEventListener('click',function(e){if(!e.target.closest||!e.target.closest('#zh-push-activar'))return;e.preventDefault();var token='';try{token=localStorage.getItem(savedKey)||'';}catch(err){}if(token)desactivar();else activar();});
-function restore(){var token='';try{token=localStorage.getItem(savedKey)||'';}catch(e){}if(token){status('Avisos activats per als partits dels teus favorits en aquest dispositiu.');button('Desactivar notificacions',false);}}
+function restore(){var token='';try{token=localStorage.getItem(savedKey)||'';}catch(e){}try{var consent=localStorage.getItem('ZH_PUSH_CONSENT_UID_V1'),box=el('zh-push-consent');if(box&&consent&&consent===idUsuari())box.checked=true;}catch(e){}if(token){status('Avisos activats per als partits dels teus favorits en aquest dispositiu.');button('Desactivar notificacions',false);}}
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',restore);else restore();
 })();</script>
 
@@ -5948,6 +5950,10 @@ zona.innerHTML=
 '<input id="emp-usr-recordar-registre" type="checkbox" checked>'+
 '<span>Mantén-me identificat en aquest dispositiu</span>'+
 '</label>'+
+'<label class="zh-recordar-login">'+
+'<input id="emp-usr-push-consent-registre" type="checkbox">'+
+'<span>Vull rebre avisos dels partits dels meus favorits: inici, gols, targetes, penals, faltes directes i final. És opcional i ho puc canviar més endavant.</span>'+
+'</label>'+
 '<button id="emp-usr-registrar" class="emp-usr-boto" type="submit">Continuar</button>'+
 '<button id="emp-usr-tornar-login" class="emp-usr-boto emp-usr-boto-secundari" type="button">Ja tinc compte</button>'+
 '<div id="emp-usr-registre-error" class="emp-usr-error"></div>'+
@@ -6013,6 +6019,10 @@ contingut().innerHTML=
 'autocomplete="email" '+
 'autocapitalize="none" '+
 'required>'+
+'</label>'+
+'<label class="zh-recordar-login">'+
+'<input id="emp-usr-push-consent-registre" type="checkbox">'+
+'<span>Vull rebre avisos dels partits dels meus favorits: inici, gols, targetes, penals, faltes directes i final. És opcional i ho puc canviar més endavant.</span>'+
 '</label>'+
 '<button '+
 'id="emp-usr-registrar" '+
@@ -6092,6 +6102,7 @@ var recordarRegistre=
 document.getElementById('emp-usr-recordar-registre') &&
 document.getElementById('emp-usr-recordar-registre').checked
 );
+var consentPushRegistre=!!(document.getElementById('emp-usr-push-consent-registre')&&document.getElementById('emp-usr-push-consent-registre').checked);
 EMP_USR_definirRecordar(recordarRegistre);
 if(recordarRegistre){
 EMP_USR_guardarIdLocal(
@@ -6100,6 +6111,7 @@ estat.idUsuari
 }else{
 EMP_USR_esborrarIdLocal();
 }
+if(consentPushRegistre){try{localStorage.setItem('ZH_PUSH_CONSENT_UID_V1',estat.idUsuari);}catch(e){}window.EMP_RPC().withSuccessHandler(function(){}).withFailureHandler(function(){}).EMP_PUSH26_CONSENTIMENT_REGISTRAR(estat.idUsuari,true);}
 carregarCataleg();
 })
 .withFailureHandler(function(err){
