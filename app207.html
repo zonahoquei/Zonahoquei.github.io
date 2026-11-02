@@ -607,7 +607,7 @@ if(offset<items.length)setTimeout(next,16);
 next();
 };</script>  
   
-<script id="zh-preload-intelligent-v7">(function(){
+<script id="zh-preload-intelligent-v8">(function(){
 'use strict';
 var token=0;
 var pla=[];
@@ -745,6 +745,19 @@ primeDetalls:true,
 idsDetalls:bloc
 };
 });
+}
+function filtresAlMinut(vista){
+return {
+vista:vista,
+club:'',
+equip:'',
+competicio:'',
+fase:'',
+favorits:false,
+_clubRaw:'',
+_equipRaw:'',
+_compRaw:''
+};
 }
 function inserirAra(jobs){
 if(!jobs||!jobs.length)return;
@@ -916,16 +929,7 @@ primeClubs(
 d.setmanaPosterior,
 d.clubs && d.clubs.posterior
 );
-var fAlMinut={
-club:'',
-equip:'',
-competicio:'',
-fase:'',
-favorits:false,
-_clubRaw:'',
-_equipRaw:'',
-_compRaw:''
-};
+var fAlMinut=filtresAlMinut('ACTUAL');
 if(d.alMinut){
 recollirActes(d.alMinut,actesMinutPendents);
 window.EMP_RPC_PRIME(
@@ -968,16 +972,7 @@ var uidAA=
 window.EMP_USR_APP&&window.EMP_USR_APP.obtenirIdUsuari
 ? window.EMP_USR_APP.obtenirIdUsuari()
 : '';
-var fAlMinut={
-club:'',
-equip:'',
-competicio:'',
-fase:'',
-favorits:false,
-_clubRaw:'',
-_equipRaw:'',
-_compRaw:''
-};
+var fAlMinut=filtresAlMinut('ACTUAL');
 var fAgenda={
 club:'',
 equip:'',
@@ -1114,7 +1109,10 @@ jugadorBase,
 );
 pla=[
 {pas:'7. Classificació · fases favorites',nom:'obtenirClassificacionsApp',args:[classFav,idUsuari],recollirClassificacions:true},
-{pas:'8. Jugadors favorits',nom:'EMP_JUGADORS_BD26_obtenir',args:[jugadorFav,idUsuari],recollirFitxesFav:true}
+{pas:'8. Jugadors favorits',nom:'EMP_JUGADORS_BD26_obtenir',args:[jugadorFav,idUsuari],recollirFitxesFav:true},
+{pas:'9. Al minut · Acabats',nom:'obtenirAlMinutApp',args:[idUsuari,filtresAlMinut('ACABATS')]},
+{pas:'10. Al minut · En joc',nom:'obtenirAlMinutApp',args:[idUsuari,filtresAlMinut('EN_JOC')]},
+{pas:'11. Al minut · Pròxims',nom:'obtenirAlMinutApp',args:[idUsuari,filtresAlMinut('PROXIMS')]}
 ];
 if(timer)clearTimeout(timer);
 timer=setTimeout(function(){
@@ -4658,7 +4656,7 @@ barraVistes.addEventListener('click',function(e){
 var b=e.target.closest('button[data-vista]');if(!b)return;
 vista=b.getAttribute('data-vista')||'ACTUAL';
 Array.prototype.forEach.call(barraVistes.querySelectorAll('button'),function(x){var actiu=x===b;x.setAttribute('aria-pressed',actiu?'true':'false');x.style.background=actiu?'#1265ad':'#f7fbff';x.style.color=actiu?'#fff':'#173c67';x.style.borderColor=actiu?'#1265ad':'#bed1e8';});
-carregar(false,true);
+carregar(false);
 });
 var resetAlMinut=document.getElementById('emp-alminut-reset');
 if(resetAlMinut){
