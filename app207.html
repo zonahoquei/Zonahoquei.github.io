@@ -5022,12 +5022,10 @@ web:web
 <script id="emp-usr-logo-compartit">(function(){var principal=document.querySelector('.zh-brand-logo'),perfil=document.querySelector('.emp-usr-logo-img');if(principal&&perfil)perfil.src=principal.src;})();</script>
 <script id="emp-usr-js">(function(){
 'use strict';
-var EMP_USR_MIGRACIO_CODI='ZH_REENTRADA_CODI_BOTONS_20261102';
+var EMP_USR_MIGRACIO_CODI='ZH_REENTRADA_CODI_BOTONS_20261102B';
 try{
 if(localStorage.getItem(EMP_USR_MIGRACIO_CODI)!=='1'){
-localStorage.removeItem('EMP_PRO_ID_USUARI');
-localStorage.removeItem('EMP_PRO_RECORDAR_USUARI');
-localStorage.removeItem('ZH_CODI_DISPOSITIU_V1');
+['EMP_PRO_ID_USUARI','EMP_PRO_RECORDAR_USUARI','ZH_CODI_DISPOSITIU_V1','ZH_DEVICE_CODE_V1','ZH_DEVICE_CODE_REMEMBER_V1'].forEach(function(k){localStorage.removeItem(k);});
 localStorage.setItem('ZH_RECORDAR_CODI_V1','0');
 localStorage.setItem(EMP_USR_MIGRACIO_CODI,'1');
 ['EMP_PRO_ID_USUARI','ZH_CODI_DISPOSITIU_V1'].forEach(function(k){try{document.cookie=k+'=; Max-Age=0; Path=/; SameSite=Lax';}catch(e){}});
