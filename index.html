@@ -107,7 +107,7 @@
   </div>
 
   <iframe id="emp-pro"
-          src="./app207.html" data-classic-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          src="./app207.html?release=20261102-buttons" data-classic-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -117,12 +117,21 @@
   <script>
   (function(){
     'use strict';
+    var REENTRADA_CODI_RELEASE='ZH_REENTRADA_CODI_BOTONS_20261102';
+    try{
+      if(localStorage.getItem(REENTRADA_CODI_RELEASE)!=='1'){
+        ['EMP_PRO_ID_USUARI','EMP_PRO_RECORDAR_USUARI','ZH_DEVICE_CODE_V1','ZH_DEVICE_CODE_REMEMBER_V1','ZH_CODI_DISPOSITIU_V1'].forEach(function(k){localStorage.removeItem(k);});
+        localStorage.setItem('ZH_RECORDAR_CODI_V1','0');
+        localStorage.setItem(REENTRADA_CODI_RELEASE,'1');
+        ['EMP_PRO_ID_USUARI','ZH_DEVICE_CODE_V1','ZH_CODI_DISPOSITIU_V1'].forEach(function(k){try{document.cookie=k+'=; Max-Age=0; Path=/; SameSite=Lax';}catch(e){}});
+      }
+    }catch(e){}
 
     var frame=document.getElementById('emp-pro');
     if(new URLSearchParams(location.search).get('classic')==='1')frame.src=frame.dataset.classicSrc;
     var ZH_DEVICE_CODE_KEY='ZH_DEVICE_CODE_V1';
     var ZH_DEVICE_CODE_REMEMBER_KEY='ZH_DEVICE_CODE_REMEMBER_V1';
-    var ZH_DEVICE_CODE_CACHE='zh-device-code-v1';
+    var ZH_DEVICE_CODE_CACHE='zh-device-code-v2';
     var ZH_DEVICE_CODE_URL='/__zh_device_code__';
     var loader=document.getElementById('zh-shell-loader');
     var temps=document.getElementById('zh-shell-time');
