@@ -4654,9 +4654,10 @@ var filtresEl=document.querySelector('#emp-pro-al-minut .emp-alminut-filtres');
 if(filtresEl)filtresEl.insertAdjacentElement('afterend',barraVistes);
 barraVistes.addEventListener('click',function(e){
 var b=e.target.closest('button[data-vista]');if(!b)return;
+e.preventDefault();e.stopPropagation();
 vista=b.getAttribute('data-vista')||'ACTUAL';
 Array.prototype.forEach.call(barraVistes.querySelectorAll('button'),function(x){var actiu=x===b;x.setAttribute('aria-pressed',actiu?'true':'false');x.style.background=actiu?'#1265ad':'#f7fbff';x.style.color=actiu?'#fff':'#173c67';x.style.borderColor=actiu?'#1265ad':'#bed1e8';});
-carregar(false);
+carregar(false,true);
 });
 var resetAlMinut=document.getElementById('emp-alminut-reset');
 if(resetAlMinut){
