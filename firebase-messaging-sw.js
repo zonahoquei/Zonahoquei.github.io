@@ -13,9 +13,13 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 messaging.onBackgroundMessage(function(payload) {
+  // FCM mostra automàticament els missatges que ja porten `notification`.
+  // Tornar a cridar showNotification en aquest cas duplicava cada avís.
+  if (payload && payload.notification) return;
   const notification = payload.notification || {};
   self.registration.showNotification(notification.title || 'ZonaHoquei', {
     body: notification.body || 'Hi ha novetats d’un dels teus favorits.',
+    // Icona de l'app (paleta blau marí/blau/groc de ZonaHoquei).
     icon: '/icon-192.png',
     badge: '/icon-192.png',
     lang: 'ca',
