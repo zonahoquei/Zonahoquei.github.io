@@ -149,7 +149,7 @@ Object.keys(filtr).sort().forEach(function(k){
 if(k==='_clubRaw'||k==='_equipRaw'||k==='_compRaw'||k==='_agendaV'||k==='_versioAlMinut'||k==='_minut')return;
 var v=filtr[k];if(v==null||v===''||v===false)return;netPantalla[k]=v;
 });
-netPantalla._filtreV=198;
+netPantalla._filtreV=nom==='obtenirAlMinutApp'?200:198;
 copiaPantalla[1]=netPantalla;return copiaPantalla;
 }
 if(nom==='obtenirClassificacionsApp'){
@@ -471,7 +471,7 @@ var temps=Number((x&&x.temps)||0);
 if(!persistibles.has(nom) || !temps || ara-temps>ttl(nom))return;
 if((nom==='EMP_USR_obtenirCataleg'||nom==='EMP_USR_obtenirCatalegJugadorsLleuger')&&args[1]!==196)return;
 var filtresAmbNom=['obtenirResultatsApp','obtenirAlMinutApp','obtenirClassificacionsApp','EMP_JUGADORS_BD26_obtenir','EMP_JUGADORS_BD26_obtenirLleuger'];
-if(filtresAmbNom.indexOf(nom)>=0){var fi=(nom==='obtenirResultatsApp'||nom==='obtenirAlMinutApp')?1:0;if(!args[fi]||args[fi]._filtreV!==198)return;}
+if(filtresAmbNom.indexOf(nom)>=0){var fi=(nom==='obtenirResultatsApp'||nom==='obtenirAlMinutApp')?1:0;var versioFiltre=nom==='obtenirAlMinutApp'?200:198;if(!args[fi]||args[fi]._filtreV!==versioFiltre)return;}
 guardarRAM({nom:nom,clau:clauRAM(nom,args)},x.dades,temps);
 }catch(err){}
 });
