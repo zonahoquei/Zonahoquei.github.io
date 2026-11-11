@@ -23,7 +23,6 @@ var IDB_OK=typeof indexedDB!=='undefined';
 var persistibles=new Set([
 'obtenirPartitsApp',
 'obtenirResultatsApp',
-'obtenirAlMinutApp',
 'obtenirClassificacionsApp',
 'EMP_JUGADORS_BD26_obtenir',
 'EMP_JUGADORS_BD26_obtenirLleuger',
@@ -92,10 +91,10 @@ var hora=Number(parts.find(function(p){return p.type==='hour';}).value);
 var minuts=hora*60+Number(parts.find(function(p){return p.type==='minute';}).value);
 live=(dia==='Sat'||dia==='Sun')?minuts>=600:minuts>=1140&&minuts<=1410;
 }catch(e){}
+if(nom==='obtenirAlMinutApp') return 15*1000;
 if(
 nom==='obtenirPartitsApp' ||
 nom==='obtenirResultatsApp' ||
-nom==='obtenirAlMinutApp' ||
 nom==='EMP_APP_BD26_obtenirActa'
 ) return 2*60*1000;
 if(
@@ -149,7 +148,7 @@ Object.keys(filtr).sort().forEach(function(k){
 if(k==='_clubRaw'||k==='_equipRaw'||k==='_compRaw'||k==='_agendaV'||k==='_versioAlMinut'||k==='_minut')return;
 var v=filtr[k];if(v==null||v===''||v===false)return;netPantalla[k]=v;
 });
-netPantalla._filtreV=nom==='obtenirAlMinutApp'?200:198;
+netPantalla._filtreV=nom==='obtenirAlMinutApp'?201:198;
 copiaPantalla[1]=netPantalla;return copiaPantalla;
 }
 if(nom==='obtenirClassificacionsApp'){
@@ -471,7 +470,7 @@ var temps=Number((x&&x.temps)||0);
 if(!persistibles.has(nom) || !temps || ara-temps>ttl(nom))return;
 if((nom==='EMP_USR_obtenirCataleg'||nom==='EMP_USR_obtenirCatalegJugadorsLleuger')&&args[1]!==196)return;
 var filtresAmbNom=['obtenirResultatsApp','obtenirAlMinutApp','obtenirClassificacionsApp','EMP_JUGADORS_BD26_obtenir','EMP_JUGADORS_BD26_obtenirLleuger'];
-if(filtresAmbNom.indexOf(nom)>=0){var fi=(nom==='obtenirResultatsApp'||nom==='obtenirAlMinutApp')?1:0;var versioFiltre=nom==='obtenirAlMinutApp'?200:198;if(!args[fi]||args[fi]._filtreV!==versioFiltre)return;}
+if(filtresAmbNom.indexOf(nom)>=0){var fi=(nom==='obtenirResultatsApp'||nom==='obtenirAlMinutApp')?1:0;var versioFiltre=nom==='obtenirAlMinutApp'?201:198;if(!args[fi]||args[fi]._filtreV!==versioFiltre)return;}
 guardarRAM({nom:nom,clau:clauRAM(nom,args)},x.dades,temps);
 }catch(err){}
 });
@@ -1110,9 +1109,6 @@ jugadorBase,
 pla=[
 {pas:'7. Classificació · fases favorites',nom:'obtenirClassificacionsApp',args:[classFav,idUsuari],recollirClassificacions:true},
 {pas:'8. Jugadors favorits',nom:'EMP_JUGADORS_BD26_obtenir',args:[jugadorFav,idUsuari],recollirFitxesFav:true},
-{pas:'9. Al minut · Acabats',nom:'obtenirAlMinutApp',args:[idUsuari,filtresAlMinut('ACABATS')]},
-{pas:'10. Al minut · En joc',nom:'obtenirAlMinutApp',args:[idUsuari,filtresAlMinut('EN_JOC')]},
-{pas:'11. Al minut · Pròxims',nom:'obtenirAlMinutApp',args:[idUsuari,filtresAlMinut('PROXIMS')]}
 ];
 if(timer)clearTimeout(timer);
 timer=setTimeout(function(){
@@ -4490,8 +4486,12 @@ d.missatge ||
 }
 function pintar(grups){
 var c=document.getElementById('emp-alminut-contingut');
+var vistaOrden=String(vista||'ACTUAL').toUpperCase();
+var ascendent=vistaOrden==='PROXIMS';
 grups=(grups||[]).slice().sort(function(a,b){
-return String(b&&b.data||'').localeCompare(String(a&&a.data||''));
+var da=String(a&& (a.dataISO||a.data)||'');
+var db=String(b&& (b.dataISO||b.data)||'');
+return ascendent?da.localeCompare(db):db.localeCompare(da);
 });
 if(!grups.length){
 c.innerHTML=
@@ -4501,17 +4501,27 @@ c.innerHTML=
 return;
 }
 c.innerHTML=grups.map(function(g){
-var partits=(g.partits||[]).map(function(p){
+var partits=(g.partits||[]).slice().sort(function(a,b){
+var ha=String(a&&a.hora||'').match(/^(\d{1,2}):(\d{2})$/);
+var hb=String(b&&b.hora||'').match(/^(\d{1,2}):(\d{2})$/);
+if(!ha&&!hb)return 0;
+if(!ha)return 1;
+if(!hb)return -1;
+var va=ha[1].padStart(2,'0')+':'+ha[2];
+var vb=hb[1].padStart(2,'0')+':'+hb[2];
+return ascendent?va.localeCompare(vb):vb.localeCompare(va);
+}).map(function(p){
 var resultat=String(p.resultat||'').trim()||'Pendent';
 var pendent=
 resultat==='Pendent' ||
 resultat==='-' ||
 resultat==='—';
 var enJoc=p.enJoc===true;
-var teActa=
-!!(
-p.idp &&
-(!pendent || p.enJocConfirmat===true || p.actaFinalitzada===true)
+var teActa=!!(
+p.idp && (
+p.acta===true || p.actaDisponible===true ||
+!pendent || p.enJocConfirmat===true || p.actaFinalitzada===true
+)
 );
 var estilFav=
 window.ZH_EQUIP_COLORS
@@ -4568,7 +4578,7 @@ if(silenci&&actualitzant)return;
 actualitzant=true; ultimaConsulta=Date.now();
 var f=filtres();
 f._minut=Math.floor(Date.now()/60000);
-f._versioAlMinut=182;
+f._versioAlMinut=201;
 if(forcar)f._refresc=Date.now();
 var n=++peticio;
 if(!silenci)document.getElementById('emp-alminut-info').textContent='Carregant…';
