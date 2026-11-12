@@ -4399,9 +4399,12 @@ var value='';
 var text='';
 if(tipus==='club'){
 value=String(x.id||x.idClub||'');
-text=x.nom||x.club||value;
+// El filtre CLUB mostra el club, mai el sufix de l'equip (A-F).
+text=String(x.nom||x.club||value).replace(/\s+[A-F]$/i,'').trim()||value;
 }else if(tipus==='equip'){
 value=String(x.id||x.idEquip||'');
+// El servidor ja retorna CLUB - CATEGORIA + lletra real de l'equip.
+// No reconstruïm el nom ni el tornem a prefixar amb el club.
 text=x.nom||x.equip||value;
 }else if(tipus==='competicio'){
 value=String(x.id||x.idCompeticio||x.idcMaster||'');
