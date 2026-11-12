@@ -2002,13 +2002,20 @@ window.location.href=url;
 });
 });
 }
+/* Controlador únic per a tots els accessos a una acta de partit. */
 document.addEventListener('click',function(e){
-var b=e.target.closest&&e.target.closest('#contingut .emp-meus-partits-acta');
+var b=e.target.closest&&e.target.closest(
+  '#contingut .emp-meus-partits-acta, '+
+  '.emp-meus-partits-acta, '+
+  '.resultats-partit-acta, '+
+  '.emp-alminut-acta, '+
+  '.zh-fitxa-partit-enllac'
+);
 if(!b)return;
 e.preventDefault();
 e.stopPropagation();
 if(window.EMP_ACTA_obrir){
-window.EMP_ACTA_obrir(b.dataset.idp||'');
+  window.EMP_ACTA_obrir(b.dataset.idp||'');
 }
 },false);
 function formatarData(data) {
@@ -2703,9 +2710,15 @@ tancar();
 if(window.EMP_JUGADORS_obrirDetall)window.EMP_JUGADORS_obrirDetall(j.dataset.jugadorId);
 return;
 }
-var x=e.target.closest&&e.target.closest('#resultats-contingut .resultats-partit-acta');if(!x)return;e.preventDefault();obrir(x.dataset.idp);
 });
-document.addEventListener('keydown',function(e){if(e.key!=='Enter'&&e.key!==' ')return;var x=e.target.closest&&e.target.closest('#resultats-contingut .resultats-partit-acta');if(!x)return;e.preventDefault();obrir(x.dataset.idp);});
+document.addEventListener('keydown',function(e){
+if(e.key!=='Enter'&&e.key!==' ')return;
+var x=e.target.closest&&e.target.closest('#resultats-contingut .resultats-partit-acta');
+if(!x)return;
+e.preventDefault();
+e.stopPropagation();
+if(window.EMP_ACTA_obrir)window.EMP_ACTA_obrir(x.dataset.idp||'');
+});
 window.EMP_ACTA_obrir=obrir;
 })();</script>  
   
@@ -4715,20 +4728,6 @@ document.getElementById('emp-alminut-fase').value='';
 carregar();
 });
 });
-document
-.getElementById('emp-alminut-contingut')
-.addEventListener('click',function(e){
-var b=
-e.target.closest &&
-e.target.closest('.emp-alminut-acta');
-if(!b)return;
-e.preventDefault();
-if(window.EMP_ACTA_obrir){
-window.EMP_ACTA_obrir(
-b.dataset.idp||''
-);
-}
-});
 document.addEventListener('click',function(e){
 var b=
 e.target.closest &&
@@ -5015,7 +5014,7 @@ web:web
 })();</script>
 
 
-<script id="zh-fitxa-partit-enllacos-v35">document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('.zh-fitxa-partit-enllac');if(b&&window.EMP_ACTA_obrir){e.preventDefault();window.EMP_ACTA_obrir(b.dataset.idp);}});</script>
+<!-- Els enllaços d’acta de les fitxes utilitzen el controlador únic global. -->
 
 
 </body>  
