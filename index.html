@@ -107,7 +107,7 @@
   </div>
 
   <iframe id="emp-pro"
-          src="./app207.html?release=20261102-buttons" data-classic-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          src="./app207.html?release=20261112-alminut-cache60" data-classic-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -200,10 +200,11 @@
     };
 
     function rpcTTL(nom){
+      if(nom==='obtenirAlMinutApp')return 60*1000;
+
       if(
         nom==='obtenirPartitsApp' ||
         nom==='obtenirResultatsApp' ||
-        nom==='obtenirAlMinutApp' ||
         nom==='EMP_APP_BD26_obtenirActa'
       )return 2*60*1000;
 
