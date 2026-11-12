@@ -22,6 +22,7 @@ var IDB_SCHEMA='rpc-v4';
 var IDB_OK=typeof indexedDB!=='undefined';
 var persistibles=new Set([
 'obtenirPartitsApp',
+'obtenirAlMinutApp',
 'obtenirResultatsApp',
 'obtenirClassificacionsApp',
 'EMP_JUGADORS_BD26_obtenir',
@@ -91,7 +92,7 @@ var hora=Number(parts.find(function(p){return p.type==='hour';}).value);
 var minuts=hora*60+Number(parts.find(function(p){return p.type==='minute';}).value);
 live=(dia==='Sat'||dia==='Sun')?minuts>=600:minuts>=1140&&minuts<=1410;
 }catch(e){}
-if(nom==='obtenirAlMinutApp') return 15*1000;
+if(nom==='obtenirAlMinutApp') return 60*1000;
 if(
 nom==='obtenirPartitsApp' ||
 nom==='obtenirResultatsApp' ||
@@ -4504,11 +4505,16 @@ c.innerHTML=grups.map(function(g){
 var partits=(g.partits||[]).slice().sort(function(a,b){
 var ha=String(a&&a.hora||'').match(/^(\d{1,2}):(\d{2})$/);
 var hb=String(b&&b.hora||'').match(/^(\d{1,2}):(\d{2})$/);
+var va=ha?ha[1].padStart(2,'0')+':'+ha[2]:'99:99';
+var vb=hb?hb[1].padStart(2,'0')+':'+hb[2]:'99:99';
+if(vistaOrden==='ACTUAL'){
+  var aj=a&&a.enJoc===true, bj=b&&b.enJoc===true;
+  if(aj!==bj)return aj?-1:1;
+  return va.localeCompare(vb);
+}
 if(!ha&&!hb)return 0;
 if(!ha)return 1;
 if(!hb)return -1;
-var va=ha[1].padStart(2,'0')+':'+ha[2];
-var vb=hb[1].padStart(2,'0')+':'+hb[2];
 return ascendent?va.localeCompare(vb):vb.localeCompare(va);
 }).map(function(p){
 var resultat=String(p.resultat||'').trim()||'Pendent';
@@ -4517,12 +4523,7 @@ resultat==='Pendent' ||
 resultat==='-' ||
 resultat==='—';
 var enJoc=p.enJoc===true;
-var teActa=!!(
-p.idp && (
-p.acta===true || p.actaDisponible===true ||
-!pendent || p.enJocConfirmat===true || p.actaFinalitzada===true
-)
-);
+var teActa=!!(p.idp && !pendent);
 var estilFav=
 window.ZH_EQUIP_COLORS
 ? window.ZH_EQUIP_COLORS.cardStyle(
@@ -4579,7 +4580,7 @@ actualitzant=true; ultimaConsulta=Date.now();
 var f=filtres();
 f._minut=Math.floor(Date.now()/60000);
 f._versioAlMinut=201;
-if(forcar)f._refresc=Date.now();
+if(forcar)f._refresc=Date.now(); // Només el botó de refresc manual força una clau nova.
 var n=++peticio;
 if(!silenci)document.getElementById('emp-alminut-info').textContent='Carregant…';
 window.EMP_RPC()
@@ -4662,12 +4663,23 @@ barraVistes.style.cssText='display:grid;grid-template-columns:repeat(3,minmax(0,
 barraVistes.innerHTML=[['ACABATS','Acabats'],['EN_JOC','En joc'],['PROXIMS','Pròxims']].map(function(x){return '<button type="button" data-vista="'+x[0]+'" aria-pressed="false" style="min-height:46px;border:2px solid #bed1e8;border-radius:12px;background:#f7fbff;color:#173c67;font:inherit;font-size:15px;font-weight:900;cursor:pointer">'+x[1]+'</button>';}).join('');
 var filtresEl=document.querySelector('#emp-pro-al-minut .emp-alminut-filtres');
 if(filtresEl)filtresEl.insertAdjacentElement('afterend',barraVistes);
+function pintarBotonsVista(){
+Array.prototype.forEach.call(barraVistes.querySelectorAll('button'),function(x){
+var v=x.getAttribute('data-vista');
+var actiu=(vista==='ACTUAL'&&(v==='EN_JOC'||v==='PROXIMS'))||vista===v;
+x.setAttribute('aria-pressed',actiu?'true':'false');
+x.style.background=actiu?'#1265ad':'#f7fbff';
+x.style.color=actiu?'#fff':'#173c67';
+x.style.borderColor=actiu?'#1265ad':'#bed1e8';
+});
+}
+pintarBotonsVista();
 barraVistes.addEventListener('click',function(e){
 var b=e.target.closest('button[data-vista]');if(!b)return;
 e.preventDefault();e.stopPropagation();
 vista=b.getAttribute('data-vista')||'ACTUAL';
-Array.prototype.forEach.call(barraVistes.querySelectorAll('button'),function(x){var actiu=x===b;x.setAttribute('aria-pressed',actiu?'true':'false');x.style.background=actiu?'#1265ad':'#f7fbff';x.style.color=actiu?'#fff':'#173c67';x.style.borderColor=actiu?'#1265ad':'#bed1e8';});
-carregar(false,true);
+pintarBotonsVista();
+carregar(false,false);
 });
 var resetAlMinut=document.getElementById('emp-alminut-reset');
 if(resetAlMinut){
