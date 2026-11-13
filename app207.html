@@ -3803,14 +3803,68 @@ if(tipus==='equip')o.dataset.idClub=String(x.idClub||'');s.appendChild(o);
 });
 if(Array.prototype.some.call(s.options,function(o){return String(o.value)===String(actual);}))s.value=actual;
 }
-var ZH_CLASS_FILTERS_FROM_MASTER_V1=(function(base){ return function(d){ d=base(d||{}); var clubs=[],equips=[],competicions=[]; function add(list,id,nom,kind,extra){ id=String(id||'').trim();nom=String(nom||'').trim(); if(!id||id==='0'||!nom||nom===id||/^club\s+\d+$/i.test(nom)||/^equip\s+\d+$/i.test(nom)||/^competici[oòó]n?\s+\d+$/i.test(nom))return; var old=list.find(function(x){return x.id===id;}); if(old){if(!old.nom||/^competici[oòó]n?\s+\d+$/i.test(old.nom)){old.nom=nom;old[kind]=nom;}return;} var x={id:id,nom:nom};x[kind]=nom;if(extra)Object.keys(extra).forEach(function(k){x[k]=extra[k];});list.push(x); } ((d.classificacionsMultiples)||[]).forEach(function(g){ var files=Array.isArray(g.files)?g.files:[],r0=files[0]||{}; var idc=g.idcMaster||r0.idCompeticio||r0.idcMaster; var nomc=g.nom||g.competicioMaster||r0.nomCompeticio||r0.competicioMaster||''; add(competicions,idc,nomc,'competicio'); files.forEach(function(r){ var idClub=r.idClub||r.club_id,idEquip=r.idEquip||r.team_id; var nomEquip=r.equip||r.nomEquip||r.team_name; var nomClub=r.club||r.nomClub||r.club_name||r.clubNom||''; if(!nomClub&&nomEquip)nomClub=String(nomEquip).replace(/\s+[A-Z]$/,'').trim(); add(clubs,idClub,nomClub,'club'); add(equips,idEquip,nomEquip,'equip',{idClub:String(idClub||'')}); }); }); function merge(master,existing,kind){ var out=master.slice();(existing||[]).forEach(function(x){ var id=String(x.id||x.idClub||x.idEquip||x.idCompeticio||x.idcMaster||'').trim(); var nom=String(x.nom||x[kind]||'').trim(); if(!id||!nom||nom===id||/^club\s+\d+$/i.test(nom)||/^equip\s+\d+$/i.test(nom)||/^competici[oòó]n?\s+\d+$/i.test(nom))return; if(!out.some(function(y){return String(y.id)===id;})){var y=Object.assign({},x,{id:id,nom:nom});y[kind]=nom;out.push(y);} });return out; } d.clubsFiltre=merge(clubs,d.clubsFiltre||d.clubs,'club');d.clubs=d.clubsFiltre; d.equips=merge(equips,d.equips,'equip'); d.competicions=merge(competicions,d.competicions,'competicio'); return d; }; })(enriquirOpcionsClassificacio_); enriquirOpcionsClassificacio_=ZH_CLASS_FILTERS_FROM_MASTER_V1; function filtresActuals(){
-var clubRaw=document.getElementById('emp-class-club').value,equipRaw=document.getElementById('emp-class-equip').value,compRaw=document.getElementById('emp-class-competicio').value;
-var favorits=clubRaw==='__FAV__'||equipRaw==='__FAV__'||compRaw==='__FAV__';
-var tots=clubRaw===''||equipRaw===''||compRaw==='';
-return {club:(clubRaw==='__FAV__'||clubRaw==='')?'':clubRaw,equip:(equipRaw==='__FAV__'||equipRaw==='')?'':equipRaw,competicio:(compRaw==='__FAV__'||compRaw==='')?'':compRaw,fase:document.getElementById('emp-class-fase').value,tots:tots,favorits:favorits,favoritsClubs:clubRaw==='__FAV__',favoritsEquips:equipRaw==='__FAV__',favoritsCompeticions:compRaw==='__FAV__',_clubRaw:clubRaw,_equipRaw:equipRaw,_compRaw:compRaw};
+function normalitzarClassMaster_(d){
+var clubs=new Map(),equips=new Map(),comps=new Map(),fases=new Map();
+function net(v){return String(v==null?'':v).replace(/\s+/g,' ').trim();}
+(d.classificacionsMultiples||[]).forEach(function(g){
+var rows=g.files||[],r0=rows[0]||{},cid=String(g.idcMaster||r0.idCompeticio||r0.idcMaster||''),fid=String(g.idcSidgad||g.id||r0.idcSidgad||'');
+var fase=net(g.nom||g.fase||''),comp=fase.replace(/\s+(OR|PLATA|BRONZE)\s+\d+$/i,' $1').replace(/\s+GRUP\s+[A-Z]$/i,'');
+if(!fase||/^Competició\s+\d+$/i.test(fase))fase='Sense nom de fase';
+if(!comp||/^Competició\s+\d+$/i.test(comp))comp='Sense nom de competició';
+g._classComp=cid;g._classFase=fid;g.nom=fase;
+if(cid&&!comps.has(cid))comps.set(cid,{id:cid,nom:comp});
+if(fid)fases.set(fid,{id:fid,nom:fase,idcMaster:cid});
+rows.forEach(function(r){
+var club=String(r.idClub||r.club_id||''),equip=String(r.idEquip||r.team_id||''),nom=net(r.equip||r.nomEquip||r.team_name||'');
+if(!equip||equip==='0'||!nom)return;
+r.idClub=club;r.idEquip=equip;r.idCompeticio=cid;r.idcSidgad=fid;
+if(club&&club!=='0'&&!clubs.has(club))clubs.set(club,{id:club,nom:nom.replace(/(?:\s+[A-Z])+$/,'')});
+if(!equips.has(equip))equips.set(equip,{id:equip,idClub:club,idCompeticio:cid,idFase:fid,nom:nom+' - '+fase});
+});
+});
+d.clubsFiltre=Array.from(clubs.values());d.clubs=d.clubsFiltre;d.equips=Array.from(equips.values());d.competicions=Array.from(comps.values());d.fases=Array.from(fases.values());return d;
 }
-function senseFiltres(f){
-return f.favorits&&!f.club&&!f.equip&&!f.competicio&&!f.fase;
+function filtresActuals(){
+var c=document.getElementById('emp-class-club'),e=document.getElementById('emp-class-equip'),p=document.getElementById('emp-class-competicio'),s=document.getElementById('emp-class-fase');
+if([c,e,p,s].some(function(x){return x.value&&x.value!=='__FAV__';}))[c,e,p].forEach(function(x){if(x.value==='__FAV__')x.value='';});
+return {club:c.value==='__FAV__'?'':c.value,equip:e.value==='__FAV__'?'':e.value,competicio:p.value==='__FAV__'?'':p.value,fase:s.value,favorits:[c,e,p].some(function(x){return x.value==='__FAV__';}),_clubRaw:c.value,_equipRaw:e.value,_compRaw:p.value};
+}
+function senseFiltres(f){return f.favorits&&!f.club&&!f.equip&&!f.competicio&&!f.fase;}
+function aplicarResposta(d,f){
+opcions('emp-class-club',d.clubsFiltre||[],'Tots els clubs','Tots els clubs','club');
+document.getElementById('emp-class-club').value=f._clubRaw!=null?f._clubRaw:(f.club||'');
+opcions('emp-class-equip',d.equips||[],'Tots els equips','Tots els equips','equip');
+document.getElementById('emp-class-equip').value=f._equipRaw!=null?f._equipRaw:(f.equip||'');
+opcions('emp-class-competicio',d.competicions||[],'Totes les competicions','Totes les competicions','competicio');
+document.getElementById('emp-class-competicio').value=f._compRaw!=null?f._compRaw:(f.competicio||'');
+opcions('emp-class-fase',d.fases||[],'Totes les fases','','fase');document.getElementById('emp-class-fase').value=f.fase||'';
+pintarMultiples(d.classificacionsMultiples||[]);
+document.getElementById('emp-class-info').textContent=(d.actualitzat?'Actualitzat: '+d.actualitzat+' · ':'')+(d.classificacionsMultiples||[]).length+' fases'+(f.favorits?' · Competicions dels favorits':'');
+guardarSnapshotClass_(f);
+}
+function filtrarCache(f){
+if(!cacheTot||!Array.isArray(cacheTot.classificacionsMultiples))return null;
+var fav={};try{fav=window.EMP_USR_APP.obtenirFavorits()||{};}catch(e){}
+function ids(a){return new Set((a||[]).map(function(x){return String(x&&typeof x==='object'?(x.id||x.idEquip||x.idClub||x.idCompeticio||''):x);}));}
+var fe=ids(fav.equips),fc=ids(fav.clubs),fp=ids(fav.competicions);
+cacheTot.classificacionsMultiples.forEach(function(g){if((g.files||[]).some(function(r){return fe.has(String(r.idEquip))||fc.has(String(r.idClub));}))fp.add(g._classComp);});
+var grups=cacheTot.classificacionsMultiples.filter(function(g){
+if(f.favorits&&!fp.has(g._classComp))return false;
+if(f.competicio&&g._classComp!==String(f.competicio))return false;
+if(f.fase&&g._classFase!==String(f.fase))return false;
+return (g.files||[]).some(function(r){return (!f.club||String(r.idClub)===String(f.club))&&(!f.equip||String(r.idEquip)===String(f.equip));});
+});
+var equips=cacheTot.equips.filter(function(e){return (!f.club||e.idClub===String(f.club))&&(!f.competicio||e.idCompeticio===String(f.competicio));});
+var fases=cacheTot.fases.filter(function(x){return (!f.competicio||x.idcMaster===String(f.competicio))&&(!f.equip||cacheTot.equips.some(function(e){return e.id===String(f.equip)&&e.idFase===x.id;}));});
+return {clubsFiltre:cacheTot.clubsFiltre,equips:equips,competicions:cacheTot.competicions,fases:fases,classificacionsMultiples:grups,actualitzat:cacheTot.actualitzat};
+}
+function carregar(){
+crear();var f=filtresActuals(),peticio=++peticioActual;
+var local=filtrarCache(f);if(local){aplicarResposta(local,f);return;}
+document.getElementById('emp-class-info').textContent='Carregant el master de totes les classificacions…';
+window.EMP_RPC().withSuccessHandler(function(d){if(peticio!==peticioActual)return;cacheTot=normalitzarClassMaster_(d||{});cacheTemps=Date.now();aplicarResposta(filtrarCache(f),f);})
+.withFailureHandler(function(e){if(peticio===peticioActual)document.getElementById('emp-class-info').textContent='Error: '+(e&&e.message?e.message:e);})
+.obtenirClassificacionsApp({preloadAll:true,_masterFiltres:20261113},idUsuari());
 }
 function guardarSnapshotClass_(f){
 if(!senseFiltres(f))return;
@@ -3820,6 +3874,7 @@ var zona=document.getElementById('emp-class-contingut');
 var info=document.getElementById('emp-class-info');
 if(!uid || !zona || !zona.innerHTML)return;
 var dades={
+versio:20261113,
 html:zona.innerHTML,
 info:info?info.textContent:'',
 controls:{}
@@ -3850,6 +3905,7 @@ window.ZH_VISTES_CACHE.classificacions;
 if(!uid || !x || String(x.idUsuari||'')!==uid)return false;
 if(Date.now()-Number(x.temps||0)>30*60*1000)return false;
 var d=x.dades||{};
+if(d.versio!==20261113)return false;
 var zona=document.getElementById('emp-class-contingut');
 var info=document.getElementById('emp-class-info');
 if(!zona || !d.html)return false;
@@ -3866,117 +3922,6 @@ zona.empRenderToken=null;
 zona.innerHTML=d.html;
 if(info)info.textContent=d.info||'Classificacions';
 return true;
-}
-function aplicarResposta(d,f){
-d=d||{};
-opcions('emp-class-club',d.clubsFiltre||d.clubs||[],'Tots els clubs','Tots els clubs','club');
-document.getElementById('emp-class-club').value=f._clubRaw||f.club||'__FAV__';
-opcions('emp-class-equip',d.equips||[],'Tots els equips','Tots els equips','equip');
-document.getElementById('emp-class-equip').value=f._equipRaw||f.equip||'__FAV__';
-opcions('emp-class-competicio',d.competicions||[],'Totes les competicions','Totes les competicions','competicio');
-document.getElementById('emp-class-competicio').value=f._compRaw||f.competicio||'__FAV__';
-opcions('emp-class-fase',d.fases||[],'Totes les fases','','fase');
-document.getElementById('emp-class-fase').value=f.fase||'';
-if(Array.isArray(d.classificacionsMultiples))pintarMultiples(d.classificacionsMultiples);
-else pintar(d.classificacio||[]);
-document.getElementById('emp-class-info').textContent=
-d.actualitzat?'Actualitzat: '+d.actualitzat:(d.missatge||'Classificacions');
-}
-function filtrarCache(f){
-if(!cacheTot||!Array.isArray(cacheTot.classificacionsMultiples))return null;
-var grups=cacheTot.classificacionsMultiples.filter(function(g){
-var files=g.files||[];
-return files.some(function(r){
-if(f.club&&String(r.idClub||'')!==String(f.club))return false;
-if(f.equip&&String(r.idEquip||'')!==String(f.equip))return false;
-if(f.competicio&&String(r.idCompeticio||r.idcMaster||'')!==String(f.competicio))return false;
-if(f.fase&&String(r.idcSidgad||g.idcSidgad||g.id||'')!==String(f.fase))return false;
-return true;
-});
-});
-var equips=(cacheTot.equips||[]).filter(function(e){
-return !f.club||String(e.idClub||'')===String(f.club);
-});
-var comps=(cacheTot.competicions||[]).filter(function(c){
-return !f.equip||grups.some(function(g){return (g.files||[]).some(function(r){
-return String(r.idEquip||'')===String(f.equip)&&String(r.idCompeticio||'')===String(c.id||c.idcMaster||'');
-});});
-});
-var fases=(cacheTot.fases||[]).filter(function(x){
-return !f.competicio||String(x.idcMaster||'')===String(f.competicio);
-});
-return {
-clubsFiltre:cacheTot.clubsFiltre||cacheTot.clubs||[],
-clubs:cacheTot.clubs||[],
-equips:equips,
-competicions:comps,
-fases:fases,
-classificacionsMultiples:grups,
-classificacio:grups.length===1?(grups[0].files||[]):[],
-actualitzat:cacheTot.actualitzat||''
-};
-}
-function carregar(opcionsCarrega){
-opcionsCarrega=opcionsCarrega||{};
-crear();
-var f=filtresActuals();
-var info=document.getElementById('emp-class-info');
-var peticio=++peticioActual;
-if(senseFiltres(f)){
-if(!opcionsCarrega.mantenirVista){
-info.textContent='Carregant favorits…';
-}
-window.EMP_RPC()
-.withSuccessHandler(function(d){
-if(peticio!==peticioActual)return;
-aplicarResposta(d||{},f);
-guardarSnapshotClass_(f);
-})
-.withFailureHandler(function(e){
-if(peticio!==peticioActual)return;
-info.textContent='Error: '+(e&&e.message?e.message:e);
-})
-.obtenirClassificacionsApp(f,idUsuari());
-return;
-}
-if(f.tots){
-var localTots=filtrarCache(f);
-if(localTots){
-aplicarResposta(localTots,f);
-return;
-}
-info.textContent='Carregant totes les classificacions…';
-window.EMP_RPC()
-.withSuccessHandler(function(d){
-if(peticio!==peticioActual)return;
-cacheTot=d||null;
-cacheTemps=Date.now();
-var local=filtrarCache(f);
-aplicarResposta(local||d||{},f);
-})
-.withFailureHandler(function(e){
-if(peticio!==peticioActual)return;
-info.textContent='Error: '+(e&&e.message?e.message:e);
-})
-.obtenirClassificacionsApp({preloadAll:true},idUsuari());
-return;
-}
-var local=filtrarCache(f);
-if(local){
-aplicarResposta(local,f);
-return;
-}
-info.textContent='Carregant…';
-window.EMP_RPC()
-.withSuccessHandler(function(d){
-if(peticio!==peticioActual)return;
-aplicarResposta(d||{},f);
-})
-.withFailureHandler(function(e){
-if(peticio!==peticioActual)return;
-info.textContent='Error: '+(e&&e.message?e.message:e);
-})
-.obtenirClassificacionsApp(f,idUsuari());
 }
 function pintarMultiples(grups){
 var c=document.getElementById('emp-class-contingut');
@@ -4076,7 +4021,7 @@ function obrir(){
 crear();
 document.getElementById('emp-class-club').value='';
 document.getElementById('emp-class-equip').value='';
-document.getElementById('emp-class-competicio').value='';
+document.getElementById('emp-class-competicio').value='__FAV__';
 document.getElementById('emp-class-fase').value='';
 document.documentElement.classList.remove('vista-resultats-activa','vista-jugadors-activa');
 document.documentElement.classList.add('vista-classificacions-activa');
