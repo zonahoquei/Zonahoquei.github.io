@@ -153,7 +153,7 @@ netPantalla._filtreV=nom==='obtenirAlMinutApp'?203:198;
 copiaPantalla[1]=netPantalla;return copiaPantalla;
 }
 if(nom==='obtenirClassificacionsApp'){
-var cf=Object.assign({},args[0]||{},{_filtreV:198}),ca=args.slice();ca[0]=cf;return ca;
+var cf=Object.assign({},args[0]||{},{_filtreV:199}),ca=args.slice();ca[0]=cf;return ca;
 }
 if(nom!=='EMP_JUGADORS_BD26_obtenir'&&nom!=='EMP_JUGADORS_BD26_obtenirLleuger')return args;
 var f=args[0]||{},net={},copia=args.slice();
@@ -471,7 +471,7 @@ var temps=Number((x&&x.temps)||0);
 if(!persistibles.has(nom) || !temps || ara-temps>ttl(nom))return;
 if((nom==='EMP_USR_obtenirCataleg'||nom==='EMP_USR_obtenirCatalegJugadorsLleuger')&&args[1]!==196)return;
 var filtresAmbNom=['obtenirResultatsApp','obtenirAlMinutApp','obtenirClassificacionsApp','EMP_JUGADORS_BD26_obtenir','EMP_JUGADORS_BD26_obtenirLleuger'];
-if(filtresAmbNom.indexOf(nom)>=0){var fi=(nom==='obtenirResultatsApp'||nom==='obtenirAlMinutApp')?1:0;var versioFiltre=nom==='obtenirAlMinutApp'?203:198;if(!args[fi]||args[fi]._filtreV!==versioFiltre)return;}
+if(filtresAmbNom.indexOf(nom)>=0){var fi=(nom==='obtenirResultatsApp'||nom==='obtenirAlMinutApp')?1:0;var versioFiltre=nom==='obtenirAlMinutApp'?203:(nom==='obtenirClassificacionsApp'?199:198);if(!args[fi]||args[fi]._filtreV!==versioFiltre)return;}
 guardarRAM({nom:nom,clau:clauRAM(nom,args)},x.dades,temps);
 }catch(err){}
 });
@@ -2591,7 +2591,23 @@ if(!origen) return;
 e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation(); obrirResultats();
 },true);
 })();</script>  
-<style id="emp-pro-acta-modal-css">#emp-pro-acta-modal{display:none;position:fixed;inset:0;z-index:200100}#emp-pro-acta-modal .emp-pro-j-modal-fons{position:absolute;inset:0;background:rgba(2,18,34,.72);backdrop-filter:blur(5px)}#emp-pro-acta-modal .emp-pro-j-modal-caixa{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(calc(100% - 24px),880px);max-height:88svh;overflow:auto;padding:22px;border-radius:22px;background:#f7fbff;color:#102e52;box-shadow:0 22px 60px rgba(0,0,0,.38)}#emp-pro-acta-modal-tancar{position:sticky;top:0;float:right;z-index:2;width:42px;height:42px;border:0;border-radius:12px;background:#123b70;color:#fff;font-size:30px;line-height:1;cursor:pointer}.resultats-partit-acta{cursor:pointer;position:relative;transition:transform .14s ease,box-shadow .14s ease}.resultats-partit-acta:focus{outline:3px solid #123b70;outline-offset:-3px}.resultats-acta-indicador{display:inline-block;margin-left:8px;padding:3px 8px;border-radius:999px;background:#123b70;color:#fff!important;font-size:11px;font-weight:950;letter-spacing:.04em;vertical-align:middle}.emp-acta-cap{padding:5px 52px 16px 2px}.emp-acta-competicio{font-size:13px;font-weight:850;color:#55718e;text-transform:uppercase;letter-spacing:.035em}.emp-acta-fase{margin-top:3px;font-size:16px;font-weight:800;color:#365a7d}.emp-acta-marcador{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;margin:12px 0 8px;padding:16px;border-radius:18px;background:linear-gradient(135deg,#123b70 0%,#0b5b78 100%);color:#fff}.emp-acta-equip{text-align:center;min-width:0;font-weight:900;font-size:clamp(15px,3.2vw,20px);overflow-wrap:anywhere}.emp-acta-equip img{display:block;width:54px;height:54px;object-fit:contain;margin:0 auto 7px;background:#fff;border-radius:12px;padding:4px}.emp-acta-marcador-centre{text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}.emp-acta-periode,.emp-acta-faltes{color:#fff;font-size:14px;font-weight:800;white-space:nowrap}.emp-acta-resultat{font-size:clamp(28px,6vw,46px);font-weight:950;white-space:nowrap}.emp-acta-meta{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 16px}.emp-acta-meta span{padding:6px 9px;border-radius:9px;background:#e5eff8;color:#214b73;font-size:12px;font-weight:800}.emp-acta-seccio{margin-top:16px;border:1px solid #d8e5f0;border-radius:16px;overflow:hidden;background:#fff}.emp-acta-seccio h3{margin:0;padding:11px 13px;background:#123b70;color:#fff;font-size:16px;font-weight:900}.emp-acta-oficials{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px}.emp-acta-oficial{padding:9px;border-radius:10px;background:#f0f6fb}.emp-acta-oficial b{display:block;font-size:11px;color:#65809a;text-transform:uppercase}.emp-acta-oficial span{font-weight:800;color:#173d63}.emp-acta-equip-titol{display:flex;align-items:center;gap:10px}.emp-acta-equip-titol img{width:32px;height:32px;object-fit:contain;background:#fff;border-radius:7px;padding:2px}.emp-acta-inicial-dot{display:inline-block;width:10px;height:10px;margin-left:7px;margin-right:3px;border-radius:50%;background:#0b63ce;vertical-align:middle;box-shadow:0 0 0 2px rgba(11,99,206,.16)}.emp-acta-jugadors{width:100%;border-collapse:collapse;font-size:13px}.emp-acta-jugadors th,.emp-acta-jugadors td{padding:8px 7px;border-bottom:1px solid #e4edf5;text-align:center}.emp-acta-jugadors th{background:#edf4fa;color:#375a7b;font-size:11px}.emp-acta-jugadors td:nth-child(2),.emp-acta-jugadors th:nth-child(2){text-align:left}.emp-acta-jugador-nom{font-weight:800;color:#173d63}.emp-acta-jugador-obrir{border:0;background:transparent;padding:0;text-align:left;font:inherit;font-weight:800;color:#173d63;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}.emp-acta-badge{display:inline-block;margin-left:4px;padding:2px 5px;border-radius:6px;background:#e6eef6;color:#31597d;font-size:9px;font-weight:900}.emp-acta-buit{padding:13px;color:#6d8194;font-weight:700}.emp-acta-actualitzar-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0;padding:12px;border-radius:12px;background:#fff4d8;color:#674a0b;font-weight:750}.emp-acta-actualitzar{border:0;border-radius:10px;padding:10px 15px;background:#123b70;color:#fff;font:inherit;font-weight:850;cursor:pointer}.emp-acta-actualitzar:disabled{opacity:.6;cursor:wait}.emp-acta-actualitzar-estat{font-size:13px}.emp-acta-actualitzat{margin:13px 2px 0;color:#71869a;font-size:11px;text-align:right}@media (hover:hover) and (pointer:fine){.resultats-partit-acta:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(14,55,91,.14)}}@media(max-width:600px){#emp-pro-acta-modal .emp-pro-j-modal-caixa{width:calc(100% - 16px);max-height:92svh;padding:14px;border-radius:18px}.emp-acta-marcador{gap:7px;padding:12px 8px}.emp-acta-equip img{width:44px;height:44px}.emp-acta-oficials{grid-template-columns:1fr}.emp-acta-jugadors{font-size:11px}.emp-acta-jugadors th,.emp-acta-jugadors td{padding:7px 4px}.emp-acta-jugadors .emp-acta-col-extra{display:none}}</style>  
+<style id="emp-pro-acta-modal-css">#emp-pro-acta-modal{display:none;position:fixed;inset:0;z-index:200100}#emp-pro-acta-modal .emp-pro-j-modal-fons{position:absolute;inset:0;background:rgba(2,18,34,.72);backdrop-filter:blur(5px)}#emp-pro-acta-modal .emp-pro-j-modal-caixa{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(calc(100% - 24px),880px);max-height:88svh;overflow:auto;padding:22px;border-radius:22px;background:#f7fbff;color:#102e52;box-shadow:0 22px 60px rgba(0,0,0,.38)}#emp-pro-acta-modal-tancar{position:sticky;top:0;float:right;z-index:2;width:42px;height:42px;border:0;border-radius:12px;background:#123b70;color:#fff;font-size:30px;line-height:1;cursor:pointer}.resultats-partit-acta{cursor:pointer;position:relative;transition:transform .14s ease,box-shadow .14s ease}.resultats-partit-acta:focus{outline:3px solid #123b70;outline-offset:-3px}.resultats-acta-indicador{display:inline-block;margin-left:8px;padding:3px 8px;border-radius:999px;background:#123b70;color:#fff!important;font-size:11px;font-weight:950;letter-spacing:.04em;vertical-align:middle}.emp-acta-cap{padding:5px 52px 16px 2px}.emp-acta-competicio{font-size:13px;font-weight:850;color:#55718e;text-transform:uppercase;letter-spacing:.035em}.emp-acta-fase{margin-top:3px;font-size:16px;font-weight:800;color:#365a7d}.emp-acta-marcador{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;margin:12px 0 8px;padding:16px;border-radius:18px;background:linear-gradient(135deg,#123b70 0%,#0b5b78 100%);color:#fff}.emp-acta-equip{text-align:center;min-width:0;font-weight:900;font-size:clamp(15px,3.2vw,20px);overflow-wrap:anywhere}.emp-acta-equip img{display:block;width:54px;height:54px;object-fit:contain;margin:0 auto 7px;background:#fff;border-radius:12px;padding:4px}.emp-acta-marcador-centre{text-align:center;display:flex;flex-direction:column;align-items:center;gap:5px}.emp-acta-periode,.emp-acta-faltes{color:#fff;font-size:14px;font-weight:800;white-space:nowrap}.emp-acta-resultat{font-size:clamp(28px,6vw,46px);font-weight:950;white-space:nowrap}.emp-acta-meta{display:flex;flex-wrap:wrap;gap:7px;margin:10px 0 16px}.emp-acta-meta span{padding:6px 9px;border-radius:9px;background:#e5eff8;color:#214b73;font-size:12px;font-weight:800}.emp-acta-seccio{margin-top:16px;border:1px solid #d8e5f0;border-radius:16px;overflow:hidden;background:#fff}.emp-acta-seccio h3{margin:0;padding:11px 13px;background:#123b70;color:#fff;font-size:16px;font-weight:900}.emp-acta-oficials{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px}.emp-acta-oficial{padding:9px;border-radius:10px;background:#f0f6fb}.emp-acta-oficial b{display:block;font-size:11px;color:#65809a;text-transform:uppercase}.emp-acta-oficial span{font-weight:800;color:#173d63}.emp-acta-equip-titol{display:flex;align-items:center;gap:10px}.emp-acta-equip-titol img{width:32px;height:32px;object-fit:contain;background:#fff;border-radius:7px;padding:2px}.emp-acta-inicial-dot{display:inline-block;width:10px;height:10px;margin-left:7px;margin-right:3px;border-radius:50%;background:#0b63ce;vertical-align:middle;box-shadow:0 0 0 2px rgba(11,99,206,.16)}.emp-acta-jugadors{width:100%;border-collapse:collapse;font-size:13px}.emp-acta-jugadors th,.emp-acta-jugadors td{padding:8px 7px;border-bottom:1px solid #e4edf5;text-align:center}.emp-acta-jugadors th{background:#edf4fa;color:#375a7b;font-size:11px}.emp-acta-jugadors td:nth-child(2),.emp-acta-jugadors th:nth-child(2){text-align:left}.emp-acta-jugador-nom{font-weight:800;color:#173d63}.emp-acta-jugador-obrir{border:0;background:transparent;padding:0;text-align:left;font:inherit;font-weight:800;color:#173d63;cursor:pointer;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}.emp-acta-badge{display:inline-block;margin-left:4px;padding:2px 5px;border-radius:6px;background:#e6eef6;color:#31597d;font-size:9px;font-weight:900}.emp-acta-buit{padding:13px;color:#6d8194;font-weight:700}.emp-acta-actualitzar-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:14px 0;padding:12px;border-radius:12px;background:#fff4d8;color:#674a0b;font-weight:750}.emp-acta-actualitzar{border:0;border-radius:10px;padding:10px 15px;background:#123b70;color:#fff;font:inherit;font-weight:850;cursor:pointer}.emp-acta-actualitzar:disabled{opacity:.6;cursor:wait}.emp-acta-actualitzar-estat{font-size:13px}.emp-acta-actualitzat{margin:13px 2px 0;color:#71869a;font-size:11px;text-align:right}@media (hover:hover) and (pointer:fine){.resultats-partit-acta:hover{transform:translateY(-1px);box-shadow:0 5px 16px rgba(14,55,91,.14)}}@media(max-width:600px){#emp-pro-acta-modal .emp-pro-j-modal-caixa{width:calc(100% - 16px);max-height:92svh;padding:14px;border-radius:18px}.emp-acta-marcador{gap:7px;padding:12px 8px}.emp-acta-equip img{width:44px;height:44px}.emp-acta-oficials{grid-template-columns:1fr}.emp-acta-jugadors{font-size:11px}.emp-acta-jugadors th,.emp-acta-jugadors td{padding:7px 4px}.emp-acta-jugadors .emp-acta-col-extra{display:none}}</style>
+<style id="emp-class-equip-agenda-css">
+#emp-class-equip-modal{display:none;position:fixed;inset:0;z-index:200110}
+#emp-class-equip-modal .emp-pro-j-modal-fons{position:absolute;inset:0;background:rgba(2,18,34,.72);backdrop-filter:blur(5px)}
+#emp-class-equip-modal .emp-pro-j-modal-caixa{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(calc(100% - 24px),880px);max-height:88svh;overflow:auto;padding:22px;border-radius:22px;background:#f7fbff;color:#102e52;box-shadow:0 22px 60px rgba(0,0,0,.38)}
+#emp-class-equip-modal-tancar{position:sticky;top:0;float:right;z-index:2;width:42px;height:42px;border:0;border-radius:12px;background:#123b70;color:#fff;font-size:30px;line-height:1;cursor:pointer}
+.emp-class-equip-obrir{border:0;background:transparent;padding:0;color:inherit;font:inherit;font-weight:850;text-align:left;cursor:pointer;text-decoration:underline;text-decoration-color:rgba(18,59,112,.35);text-underline-offset:3px}
+.emp-class-equip-obrir:disabled{cursor:default;text-decoration:none}
+.emp-class-equip-agenda{display:grid;gap:9px}
+.emp-class-equip-partit{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px 14px;border:1px solid #dce7f1;border-radius:13px;background:#fff}
+.emp-class-equip-partit-meta{grid-column:1/-1;color:#627c95;font-size:12px;font-weight:800}
+.emp-class-equip-partit-centre{display:flex;flex-wrap:wrap;gap:7px;align-items:center;min-width:0;color:#173d63}
+.emp-class-equip-partit-resultat{font-size:16px;font-weight:950;color:#123b70;white-space:nowrap}
+.emp-class-equip-acta{grid-column:1/-1;justify-self:start;border:0;border-radius:9px;padding:7px 11px;background:#123b70;color:#fff;font-weight:850;cursor:pointer}
+@media(max-width:600px){#emp-class-equip-modal .emp-pro-j-modal-caixa{width:calc(100% - 16px);max-height:92svh;padding:14px;border-radius:18px}.emp-class-equip-partit{padding:10px}.emp-class-equip-partit-centre{font-size:13px}}
+</style>
+  
 <script id="emp-pro-acta-modal-js">(function(){
 var cache={},seq=0,actaOberta="",actaActualitzant=false;
 function esc(v){return String(v==null?'':v).replace(/[&<>'"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c];});}
@@ -3700,9 +3716,9 @@ p.setAttribute('aria-hidden','true');
 p.innerHTML=
 '<div class="emp-class-inner">'+
 '<div class="emp-class-filtres">'+
-'<label>Club<select id="emp-class-club"><option value="">Favorits</option><option value="__TOTS__">Tots els clubs</option></select></label>'+
-'<label>Equip<select id="emp-class-equip"><option value="">Favorits</option><option value="__TOTS__">Tots els equips</option></select></label>'+
-'<label>Competició<select id="emp-class-competicio"><option value="">Favorits</option><option value="__TOTS__">Totes les competicions</option></select></label>'+
+'<label>Club<select id="emp-class-club"><option value="__FAV__">Tots els favorits</option><option value="">Tots els clubs</option></select></label>'+
+'<label>Equip<select id="emp-class-equip"><option value="__FAV__">Tots els favorits</option><option value="">Tots els equips</option></select></label>'+
+'<label>Competició<select id="emp-class-competicio"><option value="__FAV__">Tots els favorits</option><option value="">Totes les competicions</option></select></label>'+
 '<label>Fase / grup<select id="emp-class-fase"><option value="">Totes les fases</option></select></label>'+
 '<button type="button" id="emp-class-reset" class="zh-filtres-reset">✕ Eliminar filtres</button>'+
 '</div>'+
@@ -3725,9 +3741,9 @@ window.EMP_RESULTATS_obrirFase(b.dataset.fase||'',b.dataset.comp||'');
 var resetClass=document.getElementById('emp-class-reset');
 if(resetClass){
 resetClass.addEventListener('click',function(){
-document.getElementById('emp-class-club').value='__TOTS__';
-document.getElementById('emp-class-equip').value='__TOTS__';
-document.getElementById('emp-class-competicio').value='__TOTS__';
+document.getElementById('emp-class-club').value='';
+document.getElementById('emp-class-equip').value='';
+document.getElementById('emp-class-competicio').value='';
 document.getElementById('emp-class-fase').value='';
 carregar();
 });
@@ -3757,51 +3773,31 @@ e.preventDefault();
 if(b.disabled)return;
 actualitzar();
 });
-function opcions(id,items,text,objectes,textTots){
-var s=document.getElementById(id),actual=s.value;
-var tipus=window.ZH_ORDRE_FILTRES?window.ZH_ORDRE_FILTRES.tipusPerId(id):'';
-var ordenats=(window.ZH_ORDRE_FILTRES&&tipus)
-? window.ZH_ORDRE_FILTRES.ordenarItems(items||[],tipus)
-: (items||[]);
-s.innerHTML='<option value="">'+(tipus?'Tots els favorits':text)+'</option>';
-if(textTots){
-var tots=document.createElement('option');
-tots.value='__TOTS__';
-tots.textContent=textTots;
-s.appendChild(tots);
-}
+function opcions(id,items,primer,textTots,tipus){
+var s=document.getElementById(id);if(!s)return;
+var actual=s.value;
+var tipusFav=tipus==='club'?'clubs':(tipus==='equip'?'equips':(tipus==='competicio'?'competicions':''));
+var ordenats=(window.ZH_ORDRE_FILTRES&&tipusFav)?window.ZH_ORDRE_FILTRES.ordenarItems(items||[],tipusFav):(items||[]);
+s.innerHTML=(tipusFav?'<option value="__FAV__">Tots els favorits</option>':'')+'<option value="">'+esc(textTots||primer)+'</option>';
 ordenats.forEach(function(x){
-var o=document.createElement('option');
-if(objectes){
-o.value=String(id==='emp-class-fase'?(x.idcSidgad||x.id):(x.idcMaster||x.id));
-o.textContent=x.nom;
-if(id==='emp-class-equip')o.dataset.idClub=String(x.idClub||'');
-}else{
-o.value=x;
-o.textContent=x;
-}
-s.appendChild(o);
+var value='',text='';
+if(tipus==='club'){value=String(x.id||x.idClub||'');text=String(x.nom||x.club||value).trim()||value;}
+else if(tipus==='equip'){value=String(x.id||x.idEquip||'');text=x.nom||x.equip||value;}
+else if(tipus==='competicio'){value=String(x.id||x.idCompeticio||x.idcMaster||'');text=x.nom||x.competicio||value;}
+else{value=String(x.id||x.idFase||x.idcSidgad||'');text=x.nom||x.fase||value;}
+if(!value)return;var o=document.createElement('option');o.value=value;o.textContent=text;
+if(tipus==='equip')o.dataset.idClub=String(x.idClub||'');s.appendChild(o);
 });
-if([].some.call(s.options,function(o){return o.value===actual;}))s.value=actual;
+if(Array.prototype.some.call(s.options,function(o){return String(o.value)===String(actual);}))s.value=actual;
 }
 function filtresActuals(){
-var clubRaw=document.getElementById('emp-class-club').value;
-var equipRaw=document.getElementById('emp-class-equip').value;
-var compRaw=document.getElementById('emp-class-competicio').value;
-var tots=clubRaw==='__TOTS__'||equipRaw==='__TOTS__'||compRaw==='__TOTS__';
-return {
-club:clubRaw==='__TOTS__'?'':clubRaw,
-equip:equipRaw==='__TOTS__'?'':equipRaw,
-competicio:compRaw==='__TOTS__'?'':compRaw,
-fase:document.getElementById('emp-class-fase').value,
-tots:tots,
-_clubRaw:clubRaw,
-_equipRaw:equipRaw,
-_compRaw:compRaw
-};
+var clubRaw=document.getElementById('emp-class-club').value,equipRaw=document.getElementById('emp-class-equip').value,compRaw=document.getElementById('emp-class-competicio').value;
+var favorits=clubRaw==='__FAV__'||equipRaw==='__FAV__'||compRaw==='__FAV__';
+var tots=clubRaw===''||equipRaw===''||compRaw==='';
+return {club:(clubRaw==='__FAV__'||clubRaw==='')?'':clubRaw,equip:(equipRaw==='__FAV__'||equipRaw==='')?'':equipRaw,competicio:(compRaw==='__FAV__'||compRaw==='')?'':compRaw,fase:document.getElementById('emp-class-fase').value,tots:tots,favorits:favorits,favoritsClubs:clubRaw==='__FAV__',favoritsEquips:equipRaw==='__FAV__',favoritsCompeticions:compRaw==='__FAV__',_clubRaw:clubRaw,_equipRaw:equipRaw,_compRaw:compRaw};
 }
 function senseFiltres(f){
-return !f.tots&&!f.club&&!f.equip&&!f.competicio&&!f.fase;
+return f.favorits&&!f.club&&!f.equip&&!f.competicio&&!f.fase;
 }
 function guardarSnapshotClass_(f){
 if(!senseFiltres(f))return;
@@ -3860,13 +3856,13 @@ return true;
 }
 function aplicarResposta(d,f){
 d=d||{};
-opcions('emp-class-club',d.clubsFiltre||d.clubs||[],'Favorits',true,'Tots els clubs');
-document.getElementById('emp-class-club').value=f._clubRaw||f.club||'';
-opcions('emp-class-equip',d.equips||[],'Favorits',true,'Tots els equips');
-document.getElementById('emp-class-equip').value=f._equipRaw||f.equip||'';
-opcions('emp-class-competicio',d.competicions||[],'Favorits',true,'Totes les competicions');
-document.getElementById('emp-class-competicio').value=f._compRaw||f.competicio||'';
-opcions('emp-class-fase',d.fases||[],'Totes les fases',true);
+opcions('emp-class-club',d.clubsFiltre||d.clubs||[],'Tots els clubs','Tots els clubs','club');
+document.getElementById('emp-class-club').value=f._clubRaw||f.club||'__FAV__';
+opcions('emp-class-equip',d.equips||[],'Tots els equips','Tots els equips','equip');
+document.getElementById('emp-class-equip').value=f._equipRaw||f.equip||'__FAV__';
+opcions('emp-class-competicio',d.competicions||[],'Totes les competicions','Totes les competicions','competicio');
+document.getElementById('emp-class-competicio').value=f._compRaw||f.competicio||'__FAV__';
+opcions('emp-class-fase',d.fases||[],'Totes les fases','','fase');
 document.getElementById('emp-class-fase').value=f.fase||'';
 if(Array.isArray(d.classificacionsMultiples))pintarMultiples(d.classificacionsMultiples);
 else pintar(d.classificacio||[]);
@@ -3999,10 +3995,47 @@ var estilFav=window.ZH_EQUIP_COLORS
 ? window.ZH_EQUIP_COLORS.rowStyle(r.idEquip)
 : '';
 var classeFav=estilFav?' class="emp-class-favorit"':'';
-h+='<tr'+classeFav+(estilFav?' style="'+estilFav+'"':'')+'><td class="emp-class-pos">'+esc(r.posicio)+'</td><td class="emp-class-equip">'+(estilFav?'<span>'+esc(r.equip)+'</span>':esc(r.equip))+'</td><td>'+esc(r.pj)+'</td><td>'+esc(r.pg)+'</td><td>'+esc(r.pe)+'</td><td>'+esc(r.pp)+'</td><td>'+esc(r.gf)+'</td><td>'+esc(r.gc)+'</td><td>'+esc(r.dg)+'</td><td><strong>'+esc(r.punts)+'</strong></td></tr>';
+var equipId=String(r.idEquip||'');
+ var nomEquip='<button type="button" class="emp-class-equip-obrir" data-equip-id="'+esc(equipId)+'" data-equip-nom="'+esc(r.equip)+'"'+(equipId?'':' disabled')+'>'+esc(r.equip)+'</button>';
+ h+='<tr'+classeFav+(estilFav?' style="'+estilFav+'"':'')+'><td class="emp-class-pos">'+esc(r.posicio)+'</td><td class="emp-class-equip">'+nomEquip+'</td><td>'+esc(r.pj)+'</td><td>'+esc(r.pg)+'</td><td>'+esc(r.pe)+'</td><td>'+esc(r.pp)+'</td><td>'+esc(r.gf)+'</td><td>'+esc(r.gc)+'</td><td>'+esc(r.dg)+'</td><td><strong>'+esc(r.punts)+'</strong></td></tr>';
 });
 return h+'</tbody></table></div>';
 }
+
+function agendaEquipModal_(){
+var m=document.getElementById('emp-class-equip-modal');if(m)return m;
+m=document.createElement('div');m.id='emp-class-equip-modal';
+m.innerHTML='<div class="emp-pro-j-modal-fons"></div><section class="emp-pro-j-modal-caixa" role="dialog" aria-modal="true" aria-label="Agenda de l’equip"><button type="button" id="emp-class-equip-modal-tancar">×</button><div id="emp-class-equip-modal-contingut"></div></section>';
+document.body.appendChild(m);
+function close(){m.style.display='none';}
+m.querySelector('.emp-pro-j-modal-fons').addEventListener('click',close);
+m.querySelector('#emp-class-equip-modal-tancar').addEventListener('click',close);return m;
+}
+var agendaEquipSeq_=0;
+function obrirAgendaEquip_(idEquip,nomEquip){
+idEquip=String(idEquip||'').trim();if(!idEquip)return;
+var seq=++agendaEquipSeq_,m=agendaEquipModal_(),z=document.getElementById('emp-class-equip-modal-contingut');
+m.style.display='block';z.innerHTML='<div class="emp-pro-j-modal-carregant">Carregant tots els partits de '+esc(nomEquip||'l’equip')+'…</div>';
+window.EMP_RPC().withSuccessHandler(function(d){
+if(seq!==agendaEquipSeq_)return;
+var partits=[];((d&&d.grups)||[]).forEach(function(g){(g.partits||[]).forEach(function(p){if(String(p.idEquipLocal||'')===idEquip||String(p.idEquipVisitant||'')===idEquip)partits.push(p);});});
+partits.sort(function(a,b){var da=String(a.dataISO||a.data||''),db=String(b.dataISO||b.data||'');return da===db?String(a.hora||'').localeCompare(String(b.hora||'')):da.localeCompare(db);});
+if(!partits.length){z.innerHTML='<div class="emp-acta-cap"><div class="emp-acta-competicio">AGENDA D’EQUIP</div><div class="emp-pro-j-fitxa-nom">'+esc(nomEquip)+'</div></div><div class="emp-acta-buit">No s’han trobat partits d’aquest equip.</div>';return;}
+var html='<div class="emp-acta-cap"><div class="emp-acta-competicio">AGENDA COMPLETA</div><div class="emp-pro-j-fitxa-nom">'+esc(nomEquip)+'</div><div class="emp-acta-fase">'+partits.length+' partits</div></div><div class="emp-class-equip-agenda">';
+html+=partits.map(function(p){
+var local=String(p.local||p.equipLocal||''),visit=String(p.visitant||p.equipVisitant||''),data=String(p.data||p.dataISO||''),hora=String(p.hora||''),resultat=String(p.resultat||'Pendent'),idp=String(p.idp||'');
+var teActa=!!(p.teActa&&idp&&resultat&&resultat!=='Pendent');
+return '<article class="emp-class-equip-partit"><div class="emp-class-equip-partit-meta">'+esc(data)+(hora?' · '+esc(hora):'')+'</div><div class="emp-class-equip-partit-centre"><strong>'+esc(local)+'</strong><span>—</span><strong>'+esc(visit)+'</strong></div><div class="emp-class-equip-partit-resultat">'+esc(resultat)+'</div>'+(teActa?'<button type="button" class="emp-class-equip-acta" data-idp="'+esc(idp)+'">📋 Veure acta</button>':'')+'</article>';
+}).join('')+'</div>';z.innerHTML=html;
+}).withFailureHandler(function(e){if(seq!==agendaEquipSeq_)return;z.innerHTML='<div class="emp-pro-j-modal-error">No s’ha pogut carregar l’agenda: '+esc(e&&e.message?e.message:e)+'</div>';})
+.obtenirResultatsApp(idUsuari(),{_agendaV:181,club:'',equip:idEquip,competicio:'',fase:'',tots:true});
+}
+document.getElementById('emp-class-contingut').addEventListener('click',function(e){
+var b=e.target.closest&&e.target.closest('.emp-class-equip-obrir');
+if(b){e.preventDefault();e.stopPropagation();obrirAgendaEquip_(b.dataset.equipId,b.dataset.equipNom);return;}
+var a=e.target.closest&&e.target.closest('.emp-class-equip-acta');
+if(a){e.preventDefault();e.stopPropagation();var m=document.getElementById('emp-class-equip-modal');if(m)m.style.display='none';if(window.EMP_ACTA_obrir)window.EMP_ACTA_obrir(a.dataset.idp||'');}
+});
 function actualitzar(){
 crear();
 var b=document.getElementById('emp-class-actualitzar');
