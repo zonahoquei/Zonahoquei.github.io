@@ -3742,7 +3742,7 @@ p.innerHTML=
 '<div id="emp-class-contingut"><div class="emp-class-buit">Carregant classificacions favorites…</div></div>'+
 '</div>';
 document.body.appendChild(p);
-document.getElementById('emp-class-contingut').addEventListener('click',function(e){
+document.addEventListener('click',function(e){ if(!e.target.closest||!e.target.closest('#emp-class-contingut'))return;
 var b=e.target.closest&&e.target.closest('.zh-class-agenda');
 if(!b)return;
 e.preventDefault();
@@ -4043,7 +4043,7 @@ return '<article class="emp-class-equip-partit"><div class="emp-class-equip-part
 }).withFailureHandler(function(e){if(seq!==agendaEquipSeq_)return;z.innerHTML='<div class="emp-pro-j-modal-error">No s’ha pogut carregar l’agenda: '+esc(e&&e.message?e.message:e)+'</div>';})
 .obtenirResultatsApp(idUsuari(),{_agendaV:181,club:'',equip:idEquip,competicio:'',fase:'',tots:true});
 }
-document.getElementById('emp-class-contingut').addEventListener('click',function(e){
+document.addEventListener('click',function(e){ if(!e.target.closest||!e.target.closest('#emp-class-contingut'))return;
 var b=e.target.closest&&e.target.closest('.emp-class-equip-obrir');
 if(b){e.preventDefault();e.stopPropagation();obrirAgendaEquip_(b.dataset.equipId,b.dataset.equipNom);return;}
 var a=e.target.closest&&e.target.closest('.emp-class-equip-acta');
@@ -4056,7 +4056,7 @@ var info=document.getElementById('emp-class-info');
 if(b.disabled)return;
 b.disabled=true;
 b.textContent='Actualitzant…';
-info.textContent='Actualitzant classificacions des de SIDGAD…';
+info.textContent='Actualitzant classificacions des del JSON…';
 window.EMP_RPC()
 .withSuccessHandler(function(d){
 cacheTot=null;cacheTemps=0;
