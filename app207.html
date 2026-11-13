@@ -5074,7 +5074,7 @@ var IDS=[
   {club:'emp-pro-j-club',equip:'emp-pro-j-equip',comp:'emp-pro-j-competicio'}
 ];
 var catalegs=null,carregant=false,observer=null,aplicant=false;
-function ordena(a,b){return String(a.nom||'').localeCompare(String(b.nom||''),'ca',{numeric:true,sensitivity:'base'});}
+function ordena(a,b){function etiqueta(x){return String(x&&(x.nom||x.club||x.equip||x.competicio)||'');}return etiqueta(a).localeCompare(etiqueta(b),'ca',{numeric:true,sensitivity:'base'});}
 function especials(sel){
   var out=[];
   Array.prototype.forEach.call(sel.options||[],function(o){
@@ -5094,9 +5094,9 @@ function omple(sel,items,kind,clubId){
     var o=document.createElement('option');o.value=x.value;o.textContent=x.text;frag.appendChild(o);
   });
   arr.forEach(function(x){
-    var id=String(kind==='club'?(x.id||x.idClub||''):kind==='equip'?(x.id||x.idEquip||''):(x.id||x.idCompeticio||''));
+    var id=String(kind==='club'?(x.id||x.idClub||''):kind==='equip'?(x.id||x.idEquip||''):(x.id||x.idCompeticio||x.idcMaster||''));
     if(!id)return;
-    var o=document.createElement('option');o.value=id;o.textContent=String(x.nom||id);
+    var label=x.nom||x[kind]||id;var o=document.createElement('option');o.value=id;o.textContent=String(label).trim()||id;
     if(kind==='equip')o.dataset.idClub=String(x.idClub||'');
     frag.appendChild(o);
   });
@@ -5129,7 +5129,7 @@ function carregar(){
     catalegs=d;aplicar();
   }).withFailureHandler(function(e){
     carregant=false;console.warn('[ZH filtres compartits]',e);
-  }).EMP_APP_BD26_obtenirCatalegsFiltresMenus('','','');
+  }).obtenirAlMinutApp(window.EMP_USR_APP&&window.EMP_USR_APP.obtenirIdUsuari?window.EMP_USR_APP.obtenirIdUsuari():'',{vista:'ACTUAL',club:'',equip:'',competicio:'',fase:'',favorits:false});
 }
 function iniciar(){
   document.addEventListener('click',function(e){
