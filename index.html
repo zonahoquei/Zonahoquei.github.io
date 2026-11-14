@@ -107,7 +107,7 @@
   </div>
 
   <iframe id="emp-pro"
-          src="./app207.html?release=20261114-calendari-e354d71" data-classic-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
+          src="./app207.html?release=20261114-precarrega-v9-merge-826aba5" data-classic-src="https://script.google.com/macros/s/AKfycbw7MfcJqnKlZ1t5M84OIn8PcJE36jMnLT49rJRM8YnYabpqL1z9nHKyDbqetKdw-cnr/exec"
           allow="fullscreen"
           loading="eager"
           fetchpriority="high"
@@ -185,15 +185,8 @@
     var RPC_MAX_TOTAL=3800000;
     var rpcEnviat=false;
 
+    // Persistim només catàlegs estables. Resultats, marcadors i actes es demanen al servidor.
     var RPC_PERSISTIBLES={
-      obtenirPartitsApp:1,
-      obtenirResultatsApp:1,
-      obtenirAlMinutApp:1,
-      obtenirClassificacionsApp:1,
-      EMP_JUGADORS_BD26_obtenir:1,
-      EMP_JUGADORS_BD26_obtenirLleuger:1,
-      EMP_JUGADORS_BD26_detall:1,
-      EMP_APP_BD26_obtenirActa:1,
       EMP_USR_obtenirCataleg:1,
       EMP_USR_obtenirCatalegJugadors:1,
       EMP_USR_obtenirCatalegJugadorsLleuger:1
@@ -233,13 +226,30 @@
       var reservats=items.filter(function(x){return RPC_PANTALLES[x.nom];}).slice(0,6);
       return items.sort(function(a,b){return (reservats.indexOf(b)>=0)-(reservats.indexOf(a)>=0)||Number(b.temps||0)-Number(a.temps||0);});
     }
+    function previewSenseDadesDinamques(x){
+      var y=JSON.parse(JSON.stringify(x||{}));
+      if(y.dades){
+        (y.dades.partits||[]).forEach(function(p){
+          ['resultat','golsLocal','golsVisitant','score','report','scoreActualitzat','enJoc','enJocConfirmat','estatPartit','teActa'].forEach(function(k){delete p[k];});
+        });
+        delete y.dades.actualitzat;
+      }
+      return y;
+    }
     function previewsLlegir(){
-      try{return (JSON.parse(localStorage.getItem(HOME_PREVIEW_KEY)||'[]')||[]).filter(function(x){return x&&x.temps&&Date.now()-x.temps<86400000;});}catch(e){return [];}
+      try{
+        var items=(JSON.parse(localStorage.getItem(HOME_PREVIEW_KEY)||'[]')||[])
+          .filter(function(x){return x&&x.temps&&Date.now()-x.temps<86400000;})
+          .map(previewSenseDadesDinamques);
+        // Neteja també marcadors d'entrades de versions anteriors de la PWA.
+        localStorage.setItem(HOME_PREVIEW_KEY,JSON.stringify(items));
+        return items;
+      }catch(e){return [];}
     }
     function previewGuardar(d){
       if(!d||!llegirRecordarCodi_()||d.nom!=='obtenirPartitsApp'||!d.dades||!d.dades.ok||!d.args||d.args[2])return;
       var items=previewsLlegir().filter(function(x){return x.args[1]!==d.args[1]||x.dades.dataInicial!==d.dades.dataInicial;});
-      items.unshift({nom:d.nom,args:d.args,temps:d.temps,dades:d.dades});
+      items.unshift(previewSenseDadesDinamques({nom:d.nom,args:d.args,temps:d.temps,dades:d.dades}));
       items=items.slice(0,4);while(items.length&&JSON.stringify(items).length>600000)items.pop();
       try{localStorage.setItem(HOME_PREVIEW_KEY,JSON.stringify(items));}catch(e){}
     }
@@ -256,7 +266,7 @@
       function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
       function dia(v){var a=String(v||'').split('-');return a.length===3?a[2]+'/'+a[1]+'/'+a[0]:v;}
       var d=x.dades,colors=f&&f.idUsuari===x.args[1]&&f.favorits?f.favorits.colorsEquips||{}:{};
-      var html='<div class="zh-home-cap"><img src="./ZH-Zona-Hoquei-App-logo-300px.png" alt="ZonaHoquei"><h1>Els meus partits</h1><p>'+esc(dia(d.dataInicial))+' · '+esc(dia(d.dataFinal))+'</p><p>Dades guardades · Preparant l’app i comprovant actualització…</p></div>';
+      var html='<div class="zh-home-cap"><img src="./ZH-Zona-Hoquei-App-logo-300px.png" alt="ZonaHoquei"><h1>Els meus partits</h1><p>'+esc(dia(d.dataInicial))+' · '+esc(dia(d.dataFinal))+'</p><p>Dades prèvies · comprovant el marcador actual…</p></div>';
       if(!d.partits||!d.partits.length)return html+'<div class="zh-home-partit">No hi ha partits aquesta setmana.</div>';
       return html+d.partits.slice(0,12).map(function(p){
         var color=colors[p.idEquipLocal]||colors[p.idEquipVisitant]||'',estil='';
@@ -265,7 +275,7 @@
           var suau='rgb('+rgb.map(function(n){return Math.round(n*.18+255*.82);}).join(',')+')';
           estil=' style="border-left-color:'+color+';background:'+suau+'"';
         }
-        return '<article class="zh-home-partit"'+estil+'><div class="zh-home-meta">'+esc(dia(p.data))+' · '+esc(p.hora)+' · '+esc(p.categoria)+'</div><div class="zh-home-equips"><span>'+esc(p.local)+' — '+esc(p.visitant)+'</span><b>'+esc(p.resultat&&p.resultat!=='-'&&p.resultat!=='—'?p.resultat:'Pendent')+'</b></div></article>';
+        return '<article class="zh-home-partit"'+estil+'><div class="zh-home-meta">'+esc(dia(p.data))+' · '+esc(p.hora)+' · '+esc(p.categoria)+'</div><div class="zh-home-equips"><span>'+esc(p.local)+' — '+esc(p.visitant)+'</span><b>—</b></div></article>';
       }).join('');
     }
     function mostrarPrimeraVista(){
