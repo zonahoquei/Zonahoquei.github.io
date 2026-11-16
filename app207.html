@@ -4125,11 +4125,8 @@ requestAnimationFrame(calcularCap);
 var info=document.getElementById('emp-class-info');
 var peticio=++peticioActual;
 info.textContent='Carregant classificació…';
-var local=filtrarCache(f);
-if(local){
-aplicarResposta(local,f);
-return;
-}
+var local=filtrarCache(f),cacheRecent=!!(cacheTemps&&Date.now()-cacheTemps<CACHE_TTL);
+if(local){aplicarResposta(local,f);if(cacheRecent)return;}
 window.EMP_RPC()
 .withSuccessHandler(function(d){
 if(peticio!==peticioActual)return;
