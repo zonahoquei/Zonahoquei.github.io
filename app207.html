@@ -3917,8 +3917,8 @@ return {clubsFiltre:cacheTot.clubsFiltre,equips:equips,competicions:cacheTot.com
 }
 function carregar(){
 crear();var f=filtresActuals(),peticio=++peticioActual;
-var local=filtrarCache(f);if(local){aplicarResposta(local,f);return;}
-document.getElementById('emp-class-info').textContent='Carregant el master de totes les classificacions…';
+var local=filtrarCache(f),cacheRecent=!!(cacheTemps&&Date.now()-cacheTemps<CACHE_TTL);if(local){aplicarResposta(local,f);if(cacheRecent)return;}
+if(!local)document.getElementById('emp-class-info').textContent='Carregant el master de totes les classificacions…';
 window.EMP_RPC().withSuccessHandler(function(d){if(peticio!==peticioActual)return;cacheTot=normalitzarClassMaster_(d||{});cacheTemps=Date.now();aplicarResposta(filtrarCache(f),f);})
 .withFailureHandler(function(e){if(peticio===peticioActual)document.getElementById('emp-class-info').textContent='Error: '+(e&&e.message?e.message:e);})
 .obtenirClassificacionsApp({preloadAll:true,_masterFiltres:20261113},idUsuari());
