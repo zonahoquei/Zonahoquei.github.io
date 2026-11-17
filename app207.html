@@ -146,7 +146,7 @@ netPantalla._filtreV=nom==='obtenirAlMinutApp'?203:198;
 copiaPantalla[1]=netPantalla;return copiaPantalla;
 }
 if(nom==='obtenirClassificacionsApp'){
-var cf=Object.assign({},args[0]||{},{_filtreV:199}),ca=args.slice();ca[0]=cf;return ca;
+var cf=Object.assign({},args[0]||{},{_filtreV:206}),ca=args.slice();ca[0]=cf;return ca;
 }
 if(nom!=='EMP_JUGADORS_BD26_obtenir'&&nom!=='EMP_JUGADORS_BD26_obtenirLleuger')return args;
 var f=args[0]||{},net={},copia=args.slice();
@@ -468,7 +468,7 @@ var temps=Number((x&&x.temps)||0);
 if(!persistibles.has(nom) || !temps || ara-temps>ttl(nom))return;
 if((nom==='EMP_USR_obtenirCataleg'||nom==='EMP_USR_obtenirCatalegJugadorsLleuger')&&args[1]!==196)return;
 var filtresAmbNom=['obtenirResultatsApp','obtenirAlMinutApp','obtenirClassificacionsApp','EMP_JUGADORS_BD26_obtenir','EMP_JUGADORS_BD26_obtenirLleuger'];
-if(filtresAmbNom.indexOf(nom)>=0){var fi=(nom==='obtenirResultatsApp'||nom==='obtenirAlMinutApp')?1:0;var versioFiltre=nom==='obtenirAlMinutApp'?203:(nom==='obtenirClassificacionsApp'?199:198);if(!args[fi]||args[fi]._filtreV!==versioFiltre)return;}
+if(filtresAmbNom.indexOf(nom)>=0){var fi=(nom==='obtenirResultatsApp'||nom==='obtenirAlMinutApp')?1:0;var versioFiltre=nom==='obtenirAlMinutApp'?203:(nom==='obtenirClassificacionsApp'?206:198);if(!args[fi]||args[fi]._filtreV!==versioFiltre)return;}
 guardarRAM({nom:nom,clau:clauRAM(nom,args)},x.dades,temps);
 }catch(err){}
 });
@@ -3758,6 +3758,7 @@ afegirNousBotons();
 <style id="emp-pro-menu-4-definitiu">#menu-resultats-visible{ display:grid!important; grid-template-columns: repeat(4,minmax(0,1fr))!important; gap:14px!important; width:calc(100% - 28px)!important; max-width:none!important; margin:16px auto 18px!important; padding:0!important; box-sizing:border-box!important; }#menu-resultats-visible > button{ width:100%!important; min-width:0!important; max-width:none!important; height:76px!important; min-height:76px!important; max-height:76px!important; margin:0!important; padding:8px 6px!important; box-sizing:border-box!important; border-radius:22px!important; display:flex!important; align-items:center!important; justify-content:center!important; gap:6px!important; white-space:normal!important; overflow:hidden!important; text-align:center!important; font-size:clamp(12px,1.55vw,20px)!important; line-height:1.05!important; font-weight:850!important; }#menu-resultats-visible > button > span{ flex:0 0 auto!important; }#classificacio-obrir, #jugadors-obrir{ background:#fff!important; color:#173f78!important; border:2px solid #d7e1ec!important; box-shadow:none!important; }@media(max-width:700px){ #menu-resultats-visible{ grid-template-columns: repeat(4,minmax(0,1fr))!important; gap:6px!important; } #menu-resultats-visible > button{ height:58px!important; min-height:58px!important; max-height:58px!important; padding:5px 3px!important; border-radius:16px!important; font-size:10.5px!important; line-height:1.02!important; letter-spacing:-0.15px!important; } } #resultats-vista #resultats-contingut .resultats-partit{ display:grid!important; grid-template-columns:minmax(0,1fr) auto!important; grid-template-rows:auto auto!important; gap:6px 12px!important; align-items:center!important; }#resultats-vista #resultats-contingut .resultats-data{ grid-column:1!important; grid-row:1!important; min-width:0!important; }#resultats-vista #resultats-contingut .resultats-equips{ grid-column:1!important; grid-row:2!important; min-width:0!important; }#resultats-vista #resultats-contingut .resultats-marcador{ grid-column:2!important; grid-row:1 / 3!important; align-self:center!important; margin:0!important; }@media(max-width:700px){ #resultats-vista #resultats-contingut .resultats-marcador.resultat-jugat { min-width: 48px !important; min-height: 32px !important; padding: 4px 7px !important; font-size: 17px !important; line-height: 1 !important; font-weight: 900 !important; letter-spacing: -0.4px !important; border-radius: 9px !important; } }#resultats-vista #resultats-contingut .resultats-marcador.resultat-jugat { min-width: 48px !important; min-height: 32px !important; padding: 4px 7px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 17px !important; line-height: 1 !important; font-weight: 900 !important; letter-spacing: -0.4px !important; white-space: nowrap !important; color: #ffffff !important; background: #0d4f8b !important; border-radius: 9px !important; box-shadow: 0 3px 8px rgba(0,0,0,.18) !important; }#resultats-vista #resultats-contingut .resultats-marcador.resultat-pendent { min-width: 0 !important; min-height: 0 !important; padding: 7px 12px !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; font-size: 17px !important; line-height: 1 !important; font-weight: 850 !important; white-space: nowrap !important; color: #c00062 !important; background: #edf3f8 !important; border-radius: 999px !important; box-shadow: none !important; }@media (max-width:700px) { #resultats-vista #resultats-contingut .resultats-marcador.resultat-jugat { min-width: 48px !important; min-height: 32px !important; padding: 5px 9px !important; font-size: 17px !important; border-radius: 12px !important; } #resultats-vista #resultats-contingut .resultats-marcador.resultat-pendent { min-width: 0 !important; min-height: 0 !important; padding: 7px 10px !important; font-size: 16px !important; border-radius: 999px !important; } } #emp-pro-classificacions .emp-class-multiple-original{margin-bottom:26px}</style>  
   
 <script id="emp-pro-classificacions-js">(function(){
+window.ZH_CLASSIFICACIONS_VERSIO='20261117-V2-EQUIPS';
 var peticioActual=0;
 var cacheTot=null;
 var cacheTemps=0;
@@ -3898,16 +3899,19 @@ document.getElementById('emp-class-competicio').value=f._compRaw!=null?f._compRa
 opcions('emp-class-fase',d.fases||[],'Totes les fases','','fase');document.getElementById('emp-class-fase').value=f.fase||'';
 pintarMultiples(d.classificacionsMultiples||[]);
 document.getElementById('emp-class-info').textContent=(d.actualitzat?'Actualitzat: '+d.actualitzat+' · ':'')+(d.classificacionsMultiples||[]).length+' fases'+(f.favorits?' · Competicions dels favorits':'');
-guardarSnapshotClass_(f);
+// Les classificacions es validen sempre contra favorits actuals;
+// no es persisteix HTML antic a la memòria del shell.
 }
 function filtrarCache(f){
 if(!cacheTot||!Array.isArray(cacheTot.classificacionsMultiples))return null;
 var fav={};try{fav=window.EMP_USR_APP.obtenirFavorits()||{};}catch(e){}
 function ids(a){return new Set((a||[]).map(function(x){return String(x&&typeof x==='object'?(x.id||x.idEquip||x.idClub||x.idCompeticio||''):x);}));}
-var fe=ids(fav.equips),fc=ids(fav.clubs),fp=ids(fav.competicions);
-cacheTot.classificacionsMultiples.forEach(function(g){if((g.files||[]).some(function(r){return fe.has(String(r.idEquip))||fc.has(String(r.idClub));}))fp.add(g._classComp);});
+// Validació FINAL independent de la resposta del servidor: cap fase apareix
+// a la vista de favorits si no conté almenys un equip favorit de l'usuari.
+// No ampliem per clubs/competicions preferits: són filtres diferents.
+var fe=ids(fav.equips);
 var grups=cacheTot.classificacionsMultiples.filter(function(g){
-if(f.favorits&&cacheAbast!=='favorits'&&!fp.has(g._classComp))return false;
+if(f.favorits&&!(g.files||[]).some(function(r){return fe.has(String(r.idEquip||''));}))return false;
 if(f.competicio&&g._classComp!==String(f.competicio))return false;
 if(f.fase&&g._classFase!==String(f.fase))return false;
 return (g.files||[]).some(function(r){return (!f.club||String(r.idClub)===String(f.club))&&(!f.equip||String(r.idEquip)===String(f.equip));});
@@ -3922,9 +3926,14 @@ var abast=f.favorits?'favorits':'totes';
 var local=(cacheAbast===abast)?filtrarCache(f):null;
 var cacheRecent=!!(local&&cacheTemps&&Date.now()-cacheTemps<CACHE_TTL);
 if(local){aplicarResposta(local,f);if(cacheRecent)return;}
-else document.getElementById('emp-class-info').textContent=f.favorits
+else {
+// No deixem visible cap taula anterior quan canvia l'abast: podria ser Totes.
+var zonaClass=document.getElementById('emp-class-contingut');
+if(zonaClass){zonaClass.empRenderToken=null;zonaClass.innerHTML='<div class="emp-class-buit">Carregant classificacions…</div>';}
+document.getElementById('emp-class-info').textContent=f.favorits
 ?'Carregant classificacions dels equips favorits…'
 :'Carregant totes les classificacions…';
+}
 // Mai es demana preloadAll durant l'obertura inicial de favorits.
 // Només es consulta el master complet quan l'usuari selecciona "Totes" o un filtre concret.
 var consulta=f.favorits
@@ -3936,7 +3945,13 @@ window.EMP_RPC().withSuccessHandler(function(d){
 if(peticio!==peticioActual)return;
 if(!d||d.ok===false){document.getElementById('emp-class-info').textContent=(d&&d.missatge)||'Error carregant classificacions';return;}
 cacheTot=normalitzarClassMaster_(d);cacheTemps=Date.now();cacheAbast=abast;
-aplicarResposta(filtrarCache(f),f);
+var respostaFiltrada=filtrarCache(f);
+window.ZH_CLASSIFICACIONS_DIAGNOSTIC={versio:window.ZH_CLASSIFICACIONS_VERSIO,
+mode:abast,rebudes:(d.classificacionsMultiples||[]).length,
+mostrades:(respostaFiltrada&&respostaFiltrada.classificacionsMultiples||[]).length,
+equipsFavorits:(function(){try{return (window.EMP_USR_APP.obtenirFavorits().equips||[]).length;}catch(e){return 0;}})()};
+console.info('[ZH CLASSIFICACIONS]',window.ZH_CLASSIFICACIONS_DIAGNOSTIC);
+aplicarResposta(respostaFiltrada,f);
 }).withFailureHandler(function(e){
 if(peticio===peticioActual)document.getElementById('emp-class-info').textContent='Error: '+(e&&e.message?e.message:e);
 }).obtenirClassificacionsApp(consulta,idUsuari());
@@ -4113,8 +4128,9 @@ var b=document.getElementById(id);if(b)b.removeAttribute('aria-current');
 var bc=document.getElementById('classificacio-obrir');
 if(bc)bc.setAttribute('aria-current','page');
 requestAnimationFrame(calcularCap);
-var snapshotVisible=restaurarSnapshotClass_();
-carregar({mantenirVista:snapshotVisible});
+// No restaurem HTML de classificacions desat: podria contenir fases
+// d'una versió anterior, o de la vista "Totes".
+carregar();
 }
 function obrirFaseDirecte(idFase,idCompeticio){
 crear();
