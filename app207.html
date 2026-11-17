@@ -3761,6 +3761,7 @@ afegirNousBotons();
 var peticioActual=0;
 var cacheTot=null;
 var cacheTemps=0;
+var cacheAbast=''; // 'favorits' o 'totes'; no barrejar respostes parcials
 var CACHE_TTL=5*60*1000;
 function esc(v){
 return String(v==null?'':v).replace(/[&<>'"]/g,function(c){
@@ -3906,7 +3907,7 @@ function ids(a){return new Set((a||[]).map(function(x){return String(x&&typeof x
 var fe=ids(fav.equips),fc=ids(fav.clubs),fp=ids(fav.competicions);
 cacheTot.classificacionsMultiples.forEach(function(g){if((g.files||[]).some(function(r){return fe.has(String(r.idEquip))||fc.has(String(r.idClub));}))fp.add(g._classComp);});
 var grups=cacheTot.classificacionsMultiples.filter(function(g){
-if(f.favorits&&!fp.has(g._classComp))return false;
+if(f.favorits&&cacheAbast!=='favorits'&&!fp.has(g._classComp))return false;
 if(f.competicio&&g._classComp!==String(f.competicio))return false;
 if(f.fase&&g._classFase!==String(f.fase))return false;
 return (g.files||[]).some(function(r){return (!f.club||String(r.idClub)===String(f.club))&&(!f.equip||String(r.idEquip)===String(f.equip));});
@@ -3917,12 +3918,28 @@ return {clubsFiltre:cacheTot.clubsFiltre,equips:equips,competicions:cacheTot.com
 }
 function carregar(){
 crear();var f=filtresActuals(),peticio=++peticioActual;
-var local=filtrarCache(f),cacheRecent=!!(cacheTemps&&Date.now()-cacheTemps<CACHE_TTL);
+var abast=f.favorits?'favorits':'totes';
+var local=(cacheAbast===abast)?filtrarCache(f):null;
+var cacheRecent=!!(local&&cacheTemps&&Date.now()-cacheTemps<CACHE_TTL);
 if(local){aplicarResposta(local,f);if(cacheRecent)return;}
-else document.getElementById('emp-class-info').textContent='Carregant el master de totes les classificacions…';
-window.EMP_RPC().withSuccessHandler(function(d){if(peticio!==peticioActual)return;cacheTot=normalitzarClassMaster_(d||{});cacheTemps=Date.now();aplicarResposta(filtrarCache(f),f);})
-.withFailureHandler(function(e){if(peticio===peticioActual)document.getElementById('emp-class-info').textContent='Error: '+(e&&e.message?e.message:e);})
-.obtenirClassificacionsApp({preloadAll:true,_masterFiltres:20261113},idUsuari());
+else document.getElementById('emp-class-info').textContent=f.favorits
+?'Carregant classificacions dels equips favorits…'
+:'Carregant totes les classificacions…';
+// Mai es demana preloadAll durant l'obertura inicial de favorits.
+// Només es consulta el master complet quan l'usuari selecciona "Totes" o un filtre concret.
+var consulta=f.favorits
+?{club:'',equip:'',competicio:'',fase:'',tots:false,favorits:true,
+  favoritsClubs:true,favoritsEquips:true,favoritsCompeticions:true,
+  _clubRaw:'__FAV__',_equipRaw:'__FAV__',_compRaw:'__FAV__'}
+:{preloadAll:true,_masterFiltres:20261117};
+window.EMP_RPC().withSuccessHandler(function(d){
+if(peticio!==peticioActual)return;
+if(!d||d.ok===false){document.getElementById('emp-class-info').textContent=(d&&d.missatge)||'Error carregant classificacions';return;}
+cacheTot=normalitzarClassMaster_(d);cacheTemps=Date.now();cacheAbast=abast;
+aplicarResposta(filtrarCache(f),f);
+}).withFailureHandler(function(e){
+if(peticio===peticioActual)document.getElementById('emp-class-info').textContent='Error: '+(e&&e.message?e.message:e);
+}).obtenirClassificacionsApp(consulta,idUsuari());
 }
 function guardarSnapshotClass_(f){
 if(!senseFiltres(f))return;
@@ -3932,7 +3949,7 @@ var zona=document.getElementById('emp-class-contingut');
 var info=document.getElementById('emp-class-info');
 if(!uid || !zona || !zona.innerHTML)return;
 var dades={
-versio:20261113,
+versio:20261117,
 html:zona.innerHTML,
 info:info?info.textContent:'',
 controls:{}
@@ -3963,7 +3980,7 @@ window.ZH_VISTES_CACHE.classificacions;
 if(!uid || !x || String(x.idUsuari||'')!==uid)return false;
 if(Date.now()-Number(x.temps||0)>30*60*1000)return false;
 var d=x.dades||{};
-if(d.versio!==20261113)return false;
+if(d.versio!==20261117)return false;
 var zona=document.getElementById('emp-class-contingut');
 var info=document.getElementById('emp-class-info');
 if(!zona || !d.html)return false;
@@ -3985,7 +4002,8 @@ function pintarMultiples(grups){
 var c=document.getElementById('emp-class-contingut');
 c.empRenderToken=null;
 if(!grups||!grups.length){
-c.innerHTML='<div class="emp-class-buit">No hi ha classificacions disponibles per aquests filtres.</div>';
+var favoritActiu=document.getElementById('emp-class-competicio')&&document.getElementById('emp-class-competicio').value==='__FAV__';
+c.innerHTML='<div class="emp-class-buit">'+(favoritActiu?'No hi ha classificacions dels equips favorits. Selecciona equips favorits o consulta totes les competicions.':'No hi ha classificacions disponibles per aquests filtres.')+'</div>';
 return;
 }
 window.EMP_RENDER(c,grups,function(g){
@@ -4062,7 +4080,7 @@ b.textContent='Actualitzant…';
 info.textContent='Actualitzant classificacions des del JSON…';
 window.EMP_RPC()
 .withSuccessHandler(function(d){
-cacheTot=null;cacheTemps=0;
+cacheTot=null;cacheTemps=0;cacheAbast='';
 b.disabled=false;
 b.textContent='↻ Actualitzar classificacions';
 info.textContent=d&&d.missatge?d.missatge:'Classificacions actualitzades';
@@ -4152,9 +4170,9 @@ if(b)b.removeAttribute('aria-current');
 }
 window.addEventListener('emp-favorits-canvi',function(){
 ++peticioActual;
-cacheTot=null;cacheTemps=0;
+cacheTot=null;cacheTemps=0;cacheAbast='';
 ['emp-class-club','emp-class-equip','emp-class-competicio','emp-class-fase'].forEach(function(id){
-var e=document.getElementById(id);if(e)e.value='';
+var e=document.getElementById(id);if(e)e.value=(id==='emp-class-competicio'?'__FAV__':'');
 });
 var p=document.getElementById('emp-pro-classificacions');
 if(p){
@@ -4164,7 +4182,7 @@ if(p.getAttribute('aria-hidden')==='false')carregar();
 });
 window.EMP_CLASS_obrir=obrir;
 // Reconsulta la classificacio mantenint els filtres que l'usuari te oberts.
-window.EMP_CLASS_refrescar=function(){cacheTot=null;cacheTemps=0;carregar();};
+window.EMP_CLASS_refrescar=function(){cacheTot=null;cacheTemps=0;cacheAbast='';carregar();};
 window.EMP_CLASS_obrirFase=obrirFaseDirecte;
 window.EMP_CLASS_tancar=tancar;
 document.addEventListener('click',function(e){
